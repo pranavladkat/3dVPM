@@ -5,13 +5,15 @@ CONFIG -= qt
 
 SOURCES += \
     src/main.cpp \
-    src/surface.cpp
+    src/surface.cpp \
+    src/plot3d.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
 
 HEADERS += \
-    src/surface.hpp
+    src/surface.hpp \
+    src/plot3d.hpp
 
 
 QMAKE_CXXFLAGS += -std=c++11
