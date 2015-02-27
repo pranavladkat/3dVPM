@@ -6,7 +6,8 @@ CONFIG -= qt
 SOURCES += \
     src/main.cpp \
     src/surface.cpp \
-    src/plot3d.cpp
+    src/plot3d.cpp \
+    src/vtk_writer.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -15,7 +16,8 @@ HEADERS += \
     src/surface.hpp \
     src/plot3d.hpp \
     src/vector3d.h \
-    src/parameters.h
+    src/parameters.h \
+    src/vtk_writer.hpp
 
 
 QMAKE_CXXFLAGS += -std=c++11
