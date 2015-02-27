@@ -116,6 +116,11 @@ public:
         _data[2] = val;
     }
 
+    friend std::ostream& operator << (std::ostream& os, const vector3d& vec){
+        os << vec[0] << "\t" << vec[1] << "\t" << vec[2];
+        return os;
+    }
+
 };
 
 

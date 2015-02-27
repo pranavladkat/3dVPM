@@ -46,6 +46,8 @@ void Surface :: compute_panel_components(){
         panel_normals.push_back(normal);
     }
 
+
+
     //compute collocation point
     panel_collocation_points[0].clear();
     panel_collocation_points[1].clear();

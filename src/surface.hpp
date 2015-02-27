@@ -44,6 +44,8 @@ public:
 
     vector3d get_collocation_point(int panel,bool below_surface) const;
 
+
+
 private:
 
     /** @brief collocation points of the panels */
