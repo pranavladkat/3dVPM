@@ -1,5 +1,7 @@
 #include "surface.hpp"
 
+using namespace std;
+
 Surface::Surface()
 {
 
@@ -10,3 +12,133 @@ Surface::~Surface()
 
 }
 
+int Surface :: n_panels() const{
+    return static_cast<int> (panels.size());
+}
+
+
+void Surface :: compute_panel_components(){
+
+    //compute panel normal and areas
+    for(int p = 0; p < n_panels(); p++){
+
+        vector<int> &panel_nodes = panels[p];
+        vector3d normal;
+        if (panel_nodes.size() == 3) {
+            vector3d AB = nodes[panel_nodes[1]] - nodes[panel_nodes[0]];
+            vector3d AC = nodes[panel_nodes[2]] - nodes[panel_nodes[0]];
+            normal = AB.cross(AC);
+
+        } else { // 4 sides
+            vector3d AC = nodes[panel_nodes[2]] - nodes[panel_nodes[0]];
+            vector3d BD = nodes[panel_nodes[3]] - nodes[panel_nodes[1]];
+            normal = AC.cross(BD);
+        }
+
+        // panel area
+        panel_areas.push_back(normal.norm());
+
+        if(panel_areas[p] < Parameters::inversion_tolerance){
+            normal = 0.0;
+        }else{
+            normal.normalize();
+        }
+        panel_normals.push_back(normal);
+    }
+
+    //compute collocation point
+    panel_collocation_points[0].clear();
+    panel_collocation_points[1].clear();
+    panel_collocation_points[0].resize(n_panels());
+    panel_collocation_points[1].resize(n_panels());
+
+    for(int p = 0; p < n_panels(); p++){
+        vector3d new_cp(0.0,0.0,0.0);
+        for(int n = 0; n < (int)panels[p].size(); n++)
+            new_cp = new_cp + nodes[panels[p][n]];
+
+        new_cp = new_cp / (double)panels[p].size();
+        panel_collocation_points[0][p] = new_cp;
+
+        new_cp = new_cp - panel_normals[p] * Parameters::collocation_point_delta;
+        panel_collocation_points[1][p] = new_cp;
+    }
+
+    // compute transformation
+    for(int p = 0; p < n_panels(); p++){
+
+        vector3d longitudinal = nodes[panels[p][1]] - nodes[panels[p][0]];
+        if(longitudinal.norm() < Parameters::inversion_tolerance){
+            longitudinal = 0.0;
+        }else{
+            longitudinal.normalize();
+        }
+        panel_longitudinals.push_back(longitudinal);
+
+        vector3d transverse = panel_normals[p].cross(panel_longitudinals[p]);
+        panel_transverse.push_back(transverse);
+    }
+
+    // compute panel local coordinates
+    panel_local_coordinates.clear();
+    panel_local_coordinates.resize(n_panels());
+    for(int p = 0; p < n_panels(); p++){
+        for(int n = 0; n < (int)panels[p].size(); n++){
+            vector3d transformed_point = transform_point(p,nodes[panels[p][n]]);
+            panel_local_coordinates[p].push_back(transformed_point);
+        }
+    }
+
+
+    // compute panel farfield distance
+    panel_farfield_distance.clear();
+    panel_farfield_distance.resize(n_panels());
+    for(int p = 0; p < n_panels(); p++){
+        vector<int> &panel_nodes = panels[p];
+        double d1,d2;
+        if (panel_nodes.size() == 3) {
+            vector3d AB = nodes[panel_nodes[1]] - nodes[panel_nodes[0]];
+            vector3d AC = nodes[panel_nodes[2]] - nodes[panel_nodes[0]];
+            d1 = AB.norm();
+            d2 = AC.norm();
+
+        } else { // 4 sides
+            vector3d AC = nodes[panel_nodes[2]] - nodes[panel_nodes[0]];
+            vector3d BD = nodes[panel_nodes[3]] - nodes[panel_nodes[1]];
+            d1 = AC.norm();
+            d2 = BD.norm();
+        }
+        panel_farfield_distance[p] = max(d1,d2);
+    }
+
+}
+
+vector3d& Surface :: get_collocation_point(int panel,bool below_surface) {
+    assert(panel < panels.size());
+    return panel_collocation_points[below_surface][panel];
+}
+
+vector3d Surface :: get_collocation_point(int panel,bool below_surface) const{
+    assert(panel < panels.size());
+    return panel_collocation_points[below_surface][panel];
+}
+
+
+vector3d Surface :: transform_point(int panel, const vector3d& x){
+    vector3d transformed_point, diff;
+
+    vector3d &l = panel_longitudinals[panel];
+    vector3d &n = panel_normals[panel];
+    vector3d &t = panel_transverse[panel];
+
+    vector3d &cp = get_collocation_point(panel,false);
+
+    diff = x - cp ;
+
+    transformed_point[0] = diff[0]*l[0] + diff[1]*l[1] + diff[2]*l[2];
+    transformed_point[1] = diff[0]*t[0] + diff[1]*t[1] + diff[2]*t[2];
+    transformed_point[2] = diff[0]*n[0] + diff[1]*n[1] + diff[2]*n[2];
+
+    return transformed_point;
+
+}

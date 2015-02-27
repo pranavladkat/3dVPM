@@ -14,7 +14,8 @@ qtcAddDeployment()
 HEADERS += \
     src/surface.hpp \
     src/plot3d.hpp \
-    src/vector3d.h
+    src/vector3d.h \
+    src/parameters.h
 
 
 QMAKE_CXXFLAGS += -std=c++11

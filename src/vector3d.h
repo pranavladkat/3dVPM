@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <string>
 
 class vector3d{
 private:
@@ -71,6 +72,48 @@ public:
 
     int size() const{
         return 3;
+    }
+
+    vector3d operator - (const vector3d& vec) const {
+        vector3d result;
+        result[0] = _data[0] - vec[0];
+        result[1] = _data[1] - vec[1];
+        result[2] = _data[2] - vec[2];
+        return result;
+    }
+
+    vector3d operator + (const vector3d& vec) const {
+        vector3d result;
+        result[0] = _data[0] + vec[0];
+        result[1] = _data[1] + vec[1];
+        result[2] = _data[2] + vec[2];
+        return result;
+    }
+
+    void print () {
+        std::cout << _data[0] << "\t" << _data[1] << "\t" << _data[2] << std::endl;
+    }
+
+    vector3d operator / (const double& val){
+        vector3d result;
+        result[0] = _data[0] / val;
+        result[1] = _data[1] / val;
+        result[2] = _data[2] / val;
+        return result;
+    }
+
+    vector3d operator * (const double& val){
+        vector3d result;
+        result[0] = _data[0] * val;
+        result[1] = _data[1] * val;
+        result[2] = _data[2] * val;
+        return result;
+    }
+
+    void operator = (const double val){
+        _data[0] = val;
+        _data[1] = val;
+        _data[2] = val;
     }
 
 };
