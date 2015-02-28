@@ -44,6 +44,9 @@ public:
 
     vector3d get_collocation_point(int panel,bool below_surface) const;
 
+    void translate_surface(const vector3d&);
+
+    void rotate_surface(vector3d, bool);
 
 
 private:

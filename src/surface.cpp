@@ -125,12 +125,12 @@ void Surface :: compute_panel_components(){
 }
 
 vector3d& Surface :: get_collocation_point(int panel,bool below_surface) {
-    assert(panel < panels.size());
+    assert(panel < (int)panels.size());
     return panel_collocation_points[below_surface][panel];
 }
 
 vector3d Surface :: get_collocation_point(int panel,bool below_surface) const{
-    assert(panel < panels.size());
+    assert(panel < (int)panels.size());
     return panel_collocation_points[below_surface][panel];
 }
 
@@ -153,3 +153,38 @@ vector3d Surface :: transform_point(int panel, const vector3d& x){
     return transformed_point;
 
 }
+
+
+void Surface :: translate_surface(const vector3d& dX){
+
+    for(size_t n = 0; n < nodes.size(); n++)
+        nodes[n] = nodes[n] + dX;
+}
+
+
+void Surface :: rotate_surface(vector3d dTheta, bool isRadian){
+
+
+    if(!isRadian){
+        dTheta = dTheta * (M_PI/180.0);
+    }
+
+    for(size_t n = 0; n < nodes.size(); n++){
+
+        vector3d old_x = nodes[n];
+
+        nodes[n][0] = cos(dTheta[1])*cos(dTheta[2])*old_x[0]
+                    + cos(dTheta[1])*sin(dTheta[2])*old_x[1]
+                    - sin(dTheta[1])*old_x[2];
+
+        nodes[n][1] = (sin(dTheta[0])*sin(dTheta[1])*cos(dTheta[2]) - cos(dTheta[0])*sin(dTheta[2]))*old_x[0]
+                    + (sin(dTheta[0])*sin(dTheta[1])*sin(dTheta[2]) + cos(dTheta[0])*cos(dTheta[2]))*old_x[1]
+                    + sin(dTheta[0])*cos(dTheta[1])*old_x[2];
+
+        nodes[n][2] = (cos(dTheta[0])*sin(dTheta[1])*cos(dTheta[2]) + sin(dTheta[0])*sin(dTheta[2]))*old_x[0]
+                    + (cos(dTheta[0])*sin(dTheta[1])*sin(dTheta[2]) - sin(dTheta[0])*cos(dTheta[2]))*old_x[1]
+                    + cos(dTheta[0])*cos(dTheta[1])*old_x[2];
+    }
+}
+
+

@@ -2,6 +2,7 @@
 
 #include "plot3d.hpp"
 #include "vtk_writer.hpp"
+#include "solver.hpp"
 
 using namespace std;
 
@@ -12,7 +13,7 @@ int main()
 
     PLOT3D mesh;
 
-    string filename = "blade_coarse.x";
+    string filename = "plate_mesh_2.x";
 
     mesh.set_surface(surface);
     mesh.read_mesh(filename);
@@ -20,9 +21,14 @@ int main()
 
     surface->compute_panel_components();
 
-    vtk_writer writer(filename);
+    shared_ptr<vtk_writer> writer(new vtk_writer(filename));
 
-    //writer.write(surface,surface->panel_normals,"Normals",true);
+    writer->write_mesh(surface);
+
+    Solver solver;
+
+    solver.add_surface(surface);
+    solver.add_logger(writer);
 
     cout << "Hello World!" << endl;
     return 0;

@@ -145,7 +145,6 @@ void PLOT3D :: build_topology(){
 
 
     //compute trailing edge nodes
-
     for(int j = 0; j < JMAX; j++){
         for(int i = 0; i < IMAX; i++){
 

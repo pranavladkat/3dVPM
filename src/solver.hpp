@@ -19,6 +19,10 @@ private:
 
     std::shared_ptr<vtk_writer> log;
 
+    vector3d free_stream_velocity;
+
+
+
 public:
     Solver();
     ~Solver();
@@ -26,6 +30,8 @@ public:
     void add_surface(const std::shared_ptr<Surface>);
 
     void add_logger(const std::shared_ptr<vtk_writer>);
+
+    void set_free_stream_velocity(const vector3d&);
 
 };
 
