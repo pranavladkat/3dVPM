@@ -48,6 +48,10 @@ public:
 
     void rotate_surface(vector3d, bool);
 
+    void set_linear_velocity(const vector3d&);
+
+    void set_angular_velocity(const vector3d&);
+
 
 private:
 
@@ -69,6 +73,9 @@ private:
 
     vector3d transform_point(int panel, const vector3d& x);
 
+    vector3d linear_velocity;
+
+    vector3d angular_velocity;
 
 };
 

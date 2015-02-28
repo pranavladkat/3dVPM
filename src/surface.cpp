@@ -188,3 +188,11 @@ void Surface :: rotate_surface(vector3d dTheta, bool isRadian){
 }
 
 
+void Surface :: set_linear_velocity(const vector3d& vel){
+    linear_velocity = vel;
+}
+
+void Surface :: set_angular_velocity(const vector3d& vel){
+    angular_velocity = vel;
+}
+
