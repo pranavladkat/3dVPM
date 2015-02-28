@@ -64,6 +64,9 @@ void PLOT3D :: read_mesh(std::string name){
         } /* end i loop */
     } /* end dim loop */
 
+//    for(size_t n = 0; n < surface->nodes.size(); n++)
+//        cout << surface->nodes[n] << endl;
+
 
     //populate panels with its node numbers
     for(int j = 0; j < JMAX - 1; j++){
@@ -90,6 +93,13 @@ void PLOT3D :: read_mesh(std::string name){
 
         } /* end i loop */
     }/* end j loop */
+
+//    for(size_t p = 0; p < surface->panels.size(); p++){
+//        for(size_t n = 0; n < surface->panels[p].size(); n++){
+//            cout << surface->nodes[surface->panels[p][n]] << endl;
+//        }
+//        cout << endl;
+//    }
 
 }
 

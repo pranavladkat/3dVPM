@@ -12,15 +12,17 @@ int main()
 
     PLOT3D mesh;
 
+    string filename = "blade_coarse.x";
+
     mesh.set_surface(surface);
-    mesh.read_mesh("plate_mesh_2.x");
+    mesh.read_mesh(filename);
     mesh.build_topology();
 
     surface->compute_panel_components();
 
-    vtk_writer writer("plate");
+    vtk_writer writer(filename);
 
-//    writer.write(surface,surface->panel_normals,"Normals",true);
+    //writer.write(surface,surface->panel_normals,"Normals",true);
 
     cout << "Hello World!" << endl;
     return 0;

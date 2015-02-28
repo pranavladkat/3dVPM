@@ -32,11 +32,12 @@ void Surface :: compute_panel_components(){
         } else { // 4 sides
             vector3d AC = nodes[panel_nodes[2]] - nodes[panel_nodes[0]];
             vector3d BD = nodes[panel_nodes[3]] - nodes[panel_nodes[1]];
-            normal = AC.cross(BD);
+            normal = BD.cross(AC);
         }
 
         // panel area
-        panel_areas.push_back(normal.norm());
+        panel_areas.push_back(normal.norm()/2.0);
+        //cout << panel_areas[p] << endl;
 
         if(panel_areas[p] < Parameters::inversion_tolerance){
             normal = 0.0;
@@ -44,6 +45,7 @@ void Surface :: compute_panel_components(){
             normal.normalize();
         }
         panel_normals.push_back(normal);
+        //cout << normal << endl;
     }
 
 
@@ -61,24 +63,28 @@ void Surface :: compute_panel_components(){
 
         new_cp = new_cp / (double)panels[p].size();
         panel_collocation_points[0][p] = new_cp;
+        //cout << new_cp << endl;
 
         new_cp = new_cp - panel_normals[p] * Parameters::collocation_point_delta;
         panel_collocation_points[1][p] = new_cp;
+        //cout << new_cp << endl;
     }
 
     // compute transformation
     for(int p = 0; p < n_panels(); p++){
 
-        vector3d longitudinal = nodes[panels[p][1]] - nodes[panels[p][0]];
+        vector3d longitudinal = nodes[panels[p][0]] - nodes[panels[p][1]];
         if(longitudinal.norm() < Parameters::inversion_tolerance){
             longitudinal = 0.0;
         }else{
             longitudinal.normalize();
         }
         panel_longitudinals.push_back(longitudinal);
+        //cout << longitudinal << endl;
 
         vector3d transverse = panel_normals[p].cross(panel_longitudinals[p]);
         panel_transverse.push_back(transverse);
+        //cout << transverse << endl;
     }
 
     // compute panel local coordinates
@@ -88,7 +94,9 @@ void Surface :: compute_panel_components(){
         for(int n = 0; n < (int)panels[p].size(); n++){
             vector3d transformed_point = transform_point(p,nodes[panels[p][n]]);
             panel_local_coordinates[p].push_back(transformed_point);
+            //cout << transformed_point << endl;
         }
+        //cout << endl;
     }
 
 
@@ -110,7 +118,8 @@ void Surface :: compute_panel_components(){
             d1 = AC.norm();
             d2 = BD.norm();
         }
-        panel_farfield_distance[p] = max(d1,d2);
+        panel_farfield_distance[p] = max(d1,d2) * Parameters::farfield_factor;
+        //cout << panel_farfield_distance[p] << endl;
     }
 
 }
