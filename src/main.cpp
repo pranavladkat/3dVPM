@@ -25,7 +25,7 @@ int main()
 
     surface->compute_panel_components();
     shared_ptr<vtk_writer> writer(new vtk_writer(filename));
-    //writer->write_mesh(surface);
+    writer->write_mesh(surface);
 
     Solver solver;
     solver.add_surface(surface);
@@ -34,8 +34,10 @@ int main()
     shared_ptr<Wake> wake(new Wake());
     wake->add_lifting_surface(surface);
     wake->initialize(free_stream_velocity,time_step);
+    wake->build_topology();
 
-    writer->write_mesh(wake);
+    shared_ptr<vtk_writer> wake_write(new vtk_writer("wake"));
+    wake_write->write_mesh(wake);
 
     cout << "Hello World!" << endl;
     return 0;

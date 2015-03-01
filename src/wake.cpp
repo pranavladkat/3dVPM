@@ -47,3 +47,36 @@ void Wake :: initialize(const vector3d& free_stream_velocity, double dt){
     }
 
 }
+
+
+void Wake :: build_topology(){
+    assert(nodes.size() > 0);
+
+    int spanwise_nodes = lifting_surface->n_trailing_edge_nodes();
+    int spanwise_panels = lifting_surface->n_trailing_edge_panels();
+
+    int total_nodes = nodes.size();
+    int total_panels = n_panels();
+
+    int total_new_panels =  (total_nodes / spanwise_nodes - 1) * spanwise_panels - total_panels;
+
+    int it = 0;
+    if(total_panels > 0)
+        it++;
+
+    for(int p = 0; p < total_new_panels; p++){
+
+        if(it == spanwise_panels)
+            it++;
+
+        vector<int> new_panel;
+        new_panel.clear();
+        new_panel.push_back((total_panels + spanwise_nodes) + it);
+        new_panel.push_back((total_panels) + it);
+        new_panel.push_back((total_panels + 1) + it);
+        new_panel.push_back((total_panels + 1 + spanwise_nodes) + it);
+        panels.push_back(new_panel);
+        it++;
+    }
+
+}

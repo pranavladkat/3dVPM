@@ -19,6 +19,8 @@ public:
 
     void initialize(const vector3d& free_stream_velocity, double dt);
 
+    void build_topology();
+
 };
 
 #endif // WAKE_H
