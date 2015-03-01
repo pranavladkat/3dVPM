@@ -14,21 +14,18 @@ class vtk_writer
 {
 private:
 
-    /** @brief the output file name */
-    const std::string filename;
-
     /** @brief the file extension will be assigned based on output file format */
     const std::string file_extension;
 
 public:
-    vtk_writer(std::string);
+    vtk_writer();
     ~vtk_writer();
 
     template <class T>
-    void write(std::shared_ptr<Surface> surface, std::vector<T> data,std::string name, bool writemesh){
+    void write(std::string filename, std::shared_ptr<Surface> surface, std::vector<T> data,std::string name, bool writemesh){
 
         if(writemesh){
-            write_mesh(surface);
+            write_mesh(filename,surface);
         }
 
         std::ofstream ofile(filename + file_extension, std::ios::app);
@@ -57,7 +54,7 @@ public:
 
     }
 
-    void write_mesh(std::shared_ptr<Surface>);
+    void write_mesh(std::string filename,std::shared_ptr<Surface>);
 
 };
 

@@ -21,6 +21,8 @@ public:
 
     void build_topology();
 
+    void shed_wake();
+
 };
 
 #endif // WAKE_H

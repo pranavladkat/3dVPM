@@ -15,6 +15,11 @@ void Solver :: add_surface(const std::shared_ptr<Surface> surf){
 }
 
 
+void Solver :: add_wake(const std::shared_ptr<Wake> surf){
+    wake = surf;
+}
+
+
 void Solver :: add_logger(const std::shared_ptr<vtk_writer> writer){
     log = writer;
 }

@@ -46,6 +46,9 @@ void Wake :: initialize(const vector3d& free_stream_velocity, double dt){
         i++;
     }
 
+    // build panels
+    build_topology();
+
 }
 
 
@@ -78,5 +81,10 @@ void Wake :: build_topology(){
         panels.push_back(new_panel);
         it++;
     }
+
+}
+
+
+void Wake :: shed_wake(){
 
 }

@@ -2,8 +2,8 @@
 
 using namespace std;
 
-vtk_writer::vtk_writer(string name)
-    :filename(name), file_extension(".vtk")
+vtk_writer::vtk_writer()
+    :file_extension(".vtk")
 {
 
 }
@@ -14,7 +14,7 @@ vtk_writer::~vtk_writer()
 }
 
 
-void vtk_writer :: write_mesh(std::shared_ptr<Surface> surface){
+void vtk_writer :: write_mesh(string filename,std::shared_ptr<Surface> surface){
 
     string name = filename + file_extension;
 
