@@ -8,7 +8,7 @@
 #include <cassert>
 
 #include "vector3d.h"
-#include "parameters.h"
+#include "parameters.hpp"
 
 class Surface
 {
@@ -52,11 +52,13 @@ public:
 
     void set_angular_velocity(const vector3d&);
 
-    int n_trailing_edge_nodes();
+    int n_trailing_edge_nodes() const ;
 
-    int n_trailing_edge_panels();
+    int n_trailing_edge_panels() const ;
 
-    vector3d get_trailing_edge_bisector(int);
+    vector3d get_trailing_edge_bisector(const int) const ;
+
+    vector3d get_kinematic_velocity(const vector3d&) const;
 
 
 private:
@@ -77,11 +79,15 @@ private:
 
     std::vector<double> panel_farfield_distance;
 
-    vector3d transform_point(int panel, const vector3d& x);
+    vector3d transform_point_panel(int panel, const vector3d& x);
 
     vector3d linear_velocity;
 
     vector3d angular_velocity;
+
+    vector3d surface_origin, previous_surface_origin;
+
+    vector3d surface_orientation, previous_surface_orientation;
 
 };
 

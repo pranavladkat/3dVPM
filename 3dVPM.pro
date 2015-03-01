@@ -9,7 +9,8 @@ SOURCES += \
     src/plot3d.cpp \
     src/vtk_writer.cpp \
     src/solver.cpp \
-    src/wake.cpp
+    src/wake.cpp \
+    src/parameters.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -18,10 +19,10 @@ HEADERS += \
     src/surface.hpp \
     src/plot3d.hpp \
     src/vector3d.h \
-    src/parameters.h \
     src/vtk_writer.hpp \
     src/solver.hpp \
-    src/wake.hpp
+    src/wake.hpp \
+    src/parameters.hpp
 
 
 QMAKE_CXXFLAGS += -std=c++11

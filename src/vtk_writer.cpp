@@ -3,7 +3,7 @@
 using namespace std;
 
 vtk_writer::vtk_writer(string name)
-    :file_extension(".vtk"), filename(name)
+    :filename(name), file_extension(".vtk")
 {
 
 }

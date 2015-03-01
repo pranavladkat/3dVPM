@@ -6,6 +6,8 @@ Surface::Surface()
 {
     linear_velocity = 0.0;
     angular_velocity = 0.0;
+    surface_origin = 0.0;
+    surface_orientation = 0.0;
 }
 
 Surface::~Surface()
@@ -95,7 +97,7 @@ void Surface :: compute_panel_components(){
     panel_local_coordinates.resize(n_panels());
     for(int p = 0; p < n_panels(); p++){
         for(int n = 0; n < (int)panels[p].size(); n++){
-            vector3d transformed_point = transform_point(p,nodes[panels[p][n]]);
+            vector3d transformed_point = transform_point_panel(p,nodes[panels[p][n]]);
             panel_local_coordinates[p].push_back(transformed_point);
             //cout << transformed_point << endl;
         }
@@ -138,7 +140,7 @@ vector3d Surface :: get_collocation_point(int panel,bool below_surface) const{
 }
 
 
-vector3d Surface :: transform_point(int panel, const vector3d& x){
+vector3d Surface :: transform_point_panel(int panel, const vector3d& x){
     vector3d transformed_point, diff;
 
     vector3d &l = panel_longitudinals[panel];
@@ -200,18 +202,18 @@ void Surface :: set_angular_velocity(const vector3d& vel){
 }
 
 
-int Surface :: n_trailing_edge_nodes(){
+int Surface :: n_trailing_edge_nodes() const {
     assert(trailing_edge_nodes.size() > 0);
     return static_cast<int>(trailing_edge_nodes.size());
 }
 
-int Surface :: n_trailing_edge_panels(){
+int Surface :: n_trailing_edge_panels() const {
     assert(upper_TE_panels.size() > 0);
     return static_cast<int>(upper_TE_panels.size());
 }
 
 
-vector3d Surface :: get_trailing_edge_bisector(int TE_node){
+vector3d Surface :: get_trailing_edge_bisector(const int TE_node) const {
 
     assert(TE_node < n_trailing_edge_nodes());
     assert(panel_longitudinals.size() > 0);
@@ -229,11 +231,18 @@ vector3d Surface :: get_trailing_edge_bisector(int TE_node){
     //cout << panel_longitudinals[0] << endl;
 
     vector3d  vec1 = - panel_longitudinals[lower_TE_panels[panel]];
-    vector3d& vec2 =   panel_longitudinals[upper_TE_panels[panel]];
+    vector3d  vec2 =   panel_longitudinals[upper_TE_panels[panel]];
 
     vector3d bisector = vec1 + vec2 ;
 
     bisector.normalize();
 
     return bisector;
+}
+
+
+vector3d Surface :: get_kinematic_velocity(const vector3d& x) const {
+
+    vector3d r = x - surface_origin;
+    return linear_velocity + angular_velocity.cross(r);
 }

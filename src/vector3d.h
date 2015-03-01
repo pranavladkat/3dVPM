@@ -47,7 +47,7 @@ public:
         return (_data[0]*vec[0] + _data[1]*vec[1] + _data[2]*vec[2]);
     }
 
-    vector3d cross(const vector3d& vec){
+    vector3d cross(const vector3d& vec) const {
         vector3d cross;
         cross[0] = _data[1]*vec[2] - _data[2]*vec[1];
         cross[1] = _data[2]*vec[0] - _data[0]*vec[2];
@@ -62,11 +62,11 @@ public:
         _data[2] /= n;
     }
 
-    double squared_norm(){
+    double squared_norm() const{
         return (_data[0]*_data[0] + _data[1]*_data[1] + _data[2]*_data[2]);
     }
 
-    double norm(){
+    double norm() const {
         return sqrt(squared_norm());
     }
 
@@ -94,7 +94,7 @@ public:
         std::cout << _data[0] << "\t" << _data[1] << "\t" << _data[2] << std::endl;
     }
 
-    vector3d operator / (const double& val){
+    vector3d operator / (const double& val) const {
         vector3d result;
         result[0] = _data[0] / val;
         result[1] = _data[1] / val;
@@ -102,7 +102,7 @@ public:
         return result;
     }
 
-    vector3d operator * (const double& val){
+    vector3d operator * (const double& val) const {
         vector3d result;
         result[0] = _data[0] * val;
         result[1] = _data[1] * val;
@@ -110,7 +110,7 @@ public:
         return result;
     }
 
-    void operator = (const double val){
+    void operator = (const double val) {
         _data[0] = val;
         _data[1] = val;
         _data[2] = val;
@@ -121,7 +121,7 @@ public:
         return os;
     }
 
-    vector3d operator - () {
+    vector3d operator - () const {
         vector3d result;
         result[0] = -_data[0];
         result[1] = -_data[1];
