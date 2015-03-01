@@ -8,6 +8,7 @@
 #include <cassert>
 
 #include "surface.hpp"
+#include "wake.hpp"
 #include "vtk_writer.hpp"
 
 
@@ -17,11 +18,13 @@ private:
 
     std::shared_ptr<Surface> surface;
 
+    std::shared_ptr<Wake> wake;
+
     std::shared_ptr<vtk_writer> log;
 
     vector3d free_stream_velocity;
 
-
+    std::vector<double> source_strength;
 
 public:
     Solver();

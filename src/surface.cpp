@@ -4,7 +4,8 @@ using namespace std;
 
 Surface::Surface()
 {
-
+    linear_velocity = 0.0;
+    angular_velocity = 0.0;
 }
 
 Surface::~Surface()
@@ -18,6 +19,8 @@ int Surface :: n_panels() const{
 
 
 void Surface :: compute_panel_components(){
+
+    assert(nodes.size() > 0 && panels.size() > 0);
 
     //compute panel normal and areas
     for(int p = 0; p < n_panels(); p++){
@@ -196,3 +199,41 @@ void Surface :: set_angular_velocity(const vector3d& vel){
     angular_velocity = vel;
 }
 
+
+int Surface :: n_trailing_edge_nodes(){
+    assert(trailing_edge_nodes.size() > 0);
+    return static_cast<int>(trailing_edge_nodes.size());
+}
+
+int Surface :: n_trailing_edge_panels(){
+    assert(upper_TE_panels.size() > 0);
+    return static_cast<int>(upper_TE_panels.size());
+}
+
+
+vector3d Surface :: get_trailing_edge_bisector(int TE_node){
+
+    assert(TE_node < n_trailing_edge_nodes());
+    assert(panel_longitudinals.size() > 0);
+
+    int panel;
+
+    if(TE_node == n_trailing_edge_nodes() - 1){
+        panel = TE_node - 1;
+    }else{
+        panel = TE_node;
+    }
+
+    //cout << upper_TE_panels[panel] << endl;
+
+    //cout << panel_longitudinals[0] << endl;
+
+    vector3d  vec1 = - panel_longitudinals[lower_TE_panels[panel]];
+    vector3d& vec2 =   panel_longitudinals[upper_TE_panels[panel]];
+
+    vector3d bisector = vec1 + vec2 ;
+
+    bisector.normalize();
+
+    return bisector;
+}

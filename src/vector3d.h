@@ -121,6 +121,14 @@ public:
         return os;
     }
 
+    vector3d operator - () {
+        vector3d result;
+        result[0] = -_data[0];
+        result[1] = -_data[1];
+        result[2] = -_data[2];
+        return result;
+    }
+
 };
 
 

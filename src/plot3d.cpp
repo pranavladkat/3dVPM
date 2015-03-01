@@ -155,7 +155,6 @@ void PLOT3D :: build_topology(){
         } /* end i loop */
     } /* end j loop */
 
-
     //compute trailing edge panels
     imax = IMAX - 1;
     jmax = JMAX - 1;

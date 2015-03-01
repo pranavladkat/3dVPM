@@ -2,7 +2,7 @@
 
 Solver::Solver()
 {
-
+    free_stream_velocity = 0.0;
 }
 
 Solver::~Solver()

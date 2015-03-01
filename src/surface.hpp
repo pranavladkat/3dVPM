@@ -52,6 +52,12 @@ public:
 
     void set_angular_velocity(const vector3d&);
 
+    int n_trailing_edge_nodes();
+
+    int n_trailing_edge_panels();
+
+    vector3d get_trailing_edge_bisector(int);
+
 
 private:
 
