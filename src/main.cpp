@@ -43,3 +43,12 @@ int main()
     return 0;
 }
 
+
+
+/* Code notes:
+ * In compute_source_edge_influence, need to multiply by fabs(z) rather than z.
+ *
+ *
+ *
+ *
+ */

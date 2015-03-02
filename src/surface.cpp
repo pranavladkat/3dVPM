@@ -259,14 +259,14 @@ double Surface :: compute_source_panel_influence(const int panel, const vector3d
 
     double distance = transformed_node.norm();
 
-    if(distance > panel_farfield_distance[panel] ){
+    if(distance > panel_farfield_distance[panel])
         return (fourpi * panel_areas[panel] / distance);
-    }
 
     double influence = 0.0;
     for(size_t n = 0; n < panels[panel].size(); n++){
 
         const vector3d& node_a = panel_local_coordinates[panel][n];
+
         vector3d node_b;
         if(n == panels[panel].size() - 1)
             node_b = panel_local_coordinates[panel][0];
@@ -276,12 +276,39 @@ double Surface :: compute_source_panel_influence(const int panel, const vector3d
         influence += compute_source_edge_influence(node_a, node_b,transformed_node);
     }
 
-    return influence;
-
+    return influence*fourpi;
 }
 
 
 double Surface :: compute_source_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const{
 
+    double r1 = (x-node_a).norm();
+    double r2 = (x-node_b).norm();
+    double d12 = (node_b - node_a).norm();
 
+    double influence = 0;
+
+    if(d12 < Parameters::inversion_tolerance || (r1+r2-d12) < Parameters::inversion_tolerance){
+        influence = 0;
+    }else{
+        influence = ((x[0]-node_a[0])*(node_b[1] - node_a[1]) - (x[1]-node_a[1])*(node_b[0]-node_a[0]))
+                  / d12 * log((r1+r2+d12) / (r1+r2-d12));
+    }
+
+    if(fabs(x[2]) > Parameters::inversion_tolerance){
+
+        double e1 = pow((x[0] - node_a[0]),2) + pow(x[2],2);
+        double e2 = pow((x[0] - node_b[0]),2) + pow(x[2],2);
+        double h1 = (x[0] -node_a[0])*(x[1] - node_a[1]);
+        double h2 = (x[0]- node_b[0])*(x[1] - node_b[1]);
+        double m = (node_b[1] - node_a[1]) / (node_b[0] - node_a[0]);
+
+        double F = (m*e1 - h1) / (x[2]*r1) ;
+        double G = (m*e2 - h2) / (x[2]*r2) ;
+
+        if(F != G)
+            influence -= x[2] * atan2(F-G, 1+F*G);
+    }
+
+    return influence;
 }

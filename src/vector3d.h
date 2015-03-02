@@ -133,6 +133,9 @@ public:
         return result;
     }
 
+    operator vector3d      &()       { return static_cast<      vector3d&>(*this); }
+    operator vector3d const&() const { return static_cast<const vector3d&>(*this); }
+
 };
 
 

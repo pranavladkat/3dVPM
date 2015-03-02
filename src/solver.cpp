@@ -43,7 +43,9 @@ void Solver :: solve(){
     }
 
     for(int p = 0; p < surface->n_panels(); p++){
-        surface->compute_source_panel_influence(p,surface->get_collocation_point(p,false));
+        for(int n = 0; n < surface->n_panels(); n++){
+            cout << surface->compute_source_panel_influence(p,surface->get_collocation_point(n,false)) << endl;
+        }
     }
 
 
