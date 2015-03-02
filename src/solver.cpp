@@ -1,5 +1,7 @@
 #include "solver.hpp"
 
+using namespace std;
+
 Solver::Solver()
 {
     free_stream_velocity = 0.0;
@@ -27,4 +29,25 @@ void Solver :: add_logger(const std::shared_ptr<vtk_writer> writer){
 
 void Solver :: set_free_stream_velocity(const vector3d& vel){
     free_stream_velocity = vel;
+}
+
+void Solver :: solve(){
+
+    source_strength.clear();
+    source_strength.resize(surface->n_panels());
+
+    // compute source strength
+    for(int p = 0; p < surface->n_panels(); p++){
+        source_strength[p] = compute_source_strength(p);
+        cout << std::scientific << source_strength[p] << endl;
+    }
+
+}
+
+
+double Solver::compute_source_strength(const int panel) const{
+
+        vector3d& node = surface->get_collocation_point(panel,false);
+        vector3d vel = free_stream_velocity - surface->get_kinematic_velocity(node);
+        return -(vel.dot(surface->get_panel_normal(panel)));
 }

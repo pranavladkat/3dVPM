@@ -26,6 +26,8 @@ private:
 
     std::vector<double> source_strength;
 
+    double compute_source_strength(const int panel) const;
+
 public:
     Solver();
     ~Solver();
@@ -37,6 +39,8 @@ public:
     void add_logger(const std::shared_ptr<vtk_writer>);
 
     void set_free_stream_velocity(const vector3d&);
+
+    void solve();
 
 };
 

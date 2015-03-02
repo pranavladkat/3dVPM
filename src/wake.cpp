@@ -48,6 +48,8 @@ void Wake :: initialize(const vector3d& free_stream_velocity, double dt){
 
     // build panels
     build_topology();
+    // compute panel components
+    compute_panel_components();
 
 }
 

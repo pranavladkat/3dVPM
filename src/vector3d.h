@@ -43,6 +43,10 @@ public:
         _data[2] = vec[2];
     }
 
+    const vector3d& operator = (const vector3d& vec) const {
+        return vec;
+    }
+
     double dot(const vector3d& vec){
         return (_data[0]*vec[0] + _data[1]*vec[1] + _data[2]*vec[2]);
     }

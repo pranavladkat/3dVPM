@@ -140,14 +140,14 @@ vector3d Surface :: get_collocation_point(int panel,bool below_surface) const{
 }
 
 
-vector3d Surface :: transform_point_panel(int panel, const vector3d& x){
+vector3d Surface :: transform_point_panel(int panel, const vector3d& x) const{
     vector3d transformed_point, diff;
 
-    vector3d &l = panel_longitudinals[panel];
-    vector3d &n = panel_normals[panel];
-    vector3d &t = panel_transverse[panel];
+    const vector3d &l = panel_longitudinals[panel];
+    const vector3d &n = panel_normals[panel];
+    const vector3d &t = panel_transverse[panel];
 
-    vector3d &cp = get_collocation_point(panel,false);
+    const vector3d &cp = get_collocation_point(panel,false);
 
     diff = x - cp ;
 
@@ -245,4 +245,15 @@ vector3d Surface :: get_kinematic_velocity(const vector3d& x) const {
 
     vector3d r = x - surface_origin;
     return linear_velocity + angular_velocity.cross(r);
+}
+
+vector3d Surface :: get_panel_normal(const int i) const{
+    return panel_normals[i];
+}
+
+
+double Surface :: compute_source_panel_influence(const int panel, const vector3d& node) const{
+
+    vector3d transformed_node = transform_point_panel(panel,node);
+
 }

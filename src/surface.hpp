@@ -60,6 +60,10 @@ public:
 
     vector3d get_kinematic_velocity(const vector3d&) const;
 
+    vector3d get_panel_normal(const int) const;
+
+    double compute_source_panel_influence(const int panel, const vector3d& node) const;
+
 
 private:
 
@@ -79,7 +83,7 @@ private:
 
     std::vector<double> panel_farfield_distance;
 
-    vector3d transform_point_panel(int panel, const vector3d& x);
+    vector3d transform_point_panel(int panel, const vector3d& x) const;
 
     vector3d linear_velocity;
 
@@ -88,6 +92,8 @@ private:
     vector3d surface_origin, previous_surface_origin;
 
     vector3d surface_orientation, previous_surface_orientation;
+
+    //double compute_source_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x);
 
 };
 

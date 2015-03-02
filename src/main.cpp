@@ -35,6 +35,9 @@ int main()
     solver.add_surface(surface);
     solver.add_wake(wake);
     solver.add_logger(writer);
+    solver.set_free_stream_velocity(free_stream_velocity);
+
+    solver.solve();
 
     cout << "Hello World!" << endl;
     return 0;
