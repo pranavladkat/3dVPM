@@ -360,3 +360,79 @@ double Surface :: compute_doublet_edge_influence(const vector3d& node_a,const ve
 
     return influence;
 }
+
+
+std::pair<double,double> Surface :: compute_source_doublet_panel_influence(const int panel, const vector3d& node) const {
+
+    //first member is source influence, second is doublet influence
+    pair<double,double> influence_coefficient;
+
+    vector3d transformed_node = transform_point_panel(panel,node);
+
+    double distance = transformed_node.norm();
+
+    if(distance > panel_farfield_distance[panel]){
+        influence_coefficient.first  = (fourpi * panel_areas[panel] / distance);
+        influence_coefficient.second = (fourpi * panel_areas[panel] * transformed_node[2] * pow(distance,-3.0));
+        return influence_coefficient;
+    }
+
+    for(size_t n = 0; n < panels[panel].size(); n++){
+
+        int next_node = n + 1;
+        if(n == panels[panel].size() - 1)
+            next_node = 0;
+
+        const vector3d& node_a = panel_local_coordinates[panel][n];
+        const vector3d& node_b = panel_local_coordinates[panel][next_node];
+
+        pair<double,double> edge_influence = compute_source_doublet_edge_influence(node_a, node_b,transformed_node);
+
+        influence_coefficient.first  += edge_influence.first;
+        influence_coefficient.second += edge_influence.second;
+    }
+
+    influence_coefficient.first  *= -fourpi;
+    influence_coefficient.second *=  fourpi;
+
+    return influence_coefficient;
+}
+
+
+std::pair<double,double> Surface :: compute_source_doublet_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const {
+
+    pair<double,double> edge_influence(0,0);
+
+    double r1 = (x-node_a).norm();
+    double r2 = (x-node_b).norm();
+    double d12 = (node_b - node_a).norm();
+
+    if(d12 < Parameters::inversion_tolerance || (r1+r2-d12) < Parameters::inversion_tolerance){
+        edge_influence.first = 0;
+    }else{
+        edge_influence.first = ((x[0]-node_a[0])*(node_b[1] - node_a[1]) - (x[1]-node_a[1])*(node_b[0]-node_a[0]))
+                             / d12 * log((r1+r2+d12) / (r1+r2-d12));
+    }
+
+    if(fabs(x[2]) > Parameters::inversion_tolerance){
+
+        double e1 = pow((x[0] - node_a[0]),2) + pow(x[2],2);
+        double e2 = pow((x[0] - node_b[0]),2) + pow(x[2],2);
+        double h1 = (x[0] -node_a[0])*(x[1] - node_a[1]);
+        double h2 = (x[0]- node_b[0])*(x[1] - node_b[1]);
+        double m = (node_b[1] - node_a[1]) / (node_b[0] - node_a[0]);
+
+        double F = (m*e1 - h1) / (x[2]*r1) ;
+        double G = (m*e2 - h2) / (x[2]*r2) ;
+
+        double doublet_coef = 0;
+
+        if(F != G)
+            doublet_coef = atan2(F-G, 1+F*G);
+
+        edge_influence.first  -= x[2] * doublet_coef;
+        edge_influence.second  = doublet_coef;
+    }
+
+    return edge_influence;
+}

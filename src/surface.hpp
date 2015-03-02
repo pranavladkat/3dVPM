@@ -66,6 +66,8 @@ public:
 
     double compute_doublet_panel_influence(const int panel, const vector3d& node) const;
 
+    std::pair<double,double> compute_source_doublet_panel_influence(const int panel, const vector3d& node) const;
+
 
 private:
 
@@ -100,6 +102,8 @@ private:
     double compute_source_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const;
 
     double compute_doublet_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const;
+
+    std::pair<double,double> compute_source_doublet_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const;
 
 };
 

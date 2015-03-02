@@ -53,10 +53,22 @@ void Solver :: solve(){
     for(int p = 0; p < surface->n_panels(); p++){
         for(int n = 0; n < surface->n_panels(); n++){
 
+//            if(p == n)
+//                cout << -0.5 << endl;
+//            else
+//                cout << surface->compute_doublet_panel_influence(p,surface->get_collocation_point(n,false)) << endl;
+        }
+    }
+
+    //compute source and doublet coefficients
+    for(int p = 0; p < surface->n_panels(); p++){
+        for(int n = 0; n < surface->n_panels(); n++){
+
+            pair<double,double> influence = surface->compute_source_doublet_panel_influence(p,surface->get_collocation_point(n,false));
             if(p == n)
-                cout << -0.5 << endl;
-            else
-                cout << surface->compute_doublet_panel_influence(p,surface->get_collocation_point(n,false)) << endl;
+                influence.second = -0.5;
+            cout << influence.first << "\t\t" << influence.second << endl;
+
         }
     }
 
