@@ -265,18 +265,17 @@ double Surface :: compute_source_panel_influence(const int panel, const vector3d
     double influence = 0.0;
     for(size_t n = 0; n < panels[panel].size(); n++){
 
-        const vector3d& node_a = panel_local_coordinates[panel][n];
-
-        vector3d node_b;
+        int next_node = n + 1;
         if(n == panels[panel].size() - 1)
-            node_b = panel_local_coordinates[panel][0];
-        else
-            node_b = panel_local_coordinates[panel][n+1];
+            next_node = 0;
+
+        const vector3d& node_a = panel_local_coordinates[panel][n];
+        const vector3d& node_b = panel_local_coordinates[panel][next_node];
 
         influence += compute_source_edge_influence(node_a, node_b,transformed_node);
     }
 
-    return influence*fourpi;
+    return -influence*fourpi;
 }
 
 
@@ -315,7 +314,7 @@ double Surface :: compute_source_edge_influence(const vector3d& node_a,const vec
 
 
 
-double Surface :: compute_doublet_panel_influence(const int panel, const vector3d& node) const{
+double Surface :: compute_doublet_panel_influence(const int panel, const vector3d& node) const {
 
     vector3d transformed_node = transform_point_panel(panel,node);
 
@@ -324,6 +323,40 @@ double Surface :: compute_doublet_panel_influence(const int panel, const vector3
     if(distance > panel_farfield_distance[panel])
         return (fourpi * panel_areas[panel] * transformed_node[2] * pow(distance,-3.0));
 
+    double influence = 0.0;
+    for(size_t n = 0; n < panels[panel].size(); n++){
+
+        int next_node = n + 1;
+        if(n == panels[panel].size() - 1)
+            next_node = 0;
+
+        const vector3d& node_a = panel_local_coordinates[panel][n];
+        const vector3d& node_b = panel_local_coordinates[panel][next_node];
+
+        influence += compute_doublet_edge_influence(node_a, node_b,transformed_node);
+    }
+
+    return influence*fourpi;
+}
 
 
+double Surface :: compute_doublet_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const{
+
+    double influence = 0;
+
+    double r1 = (x-node_a).norm();
+    double r2 = (x-node_b).norm();
+    double e1 = pow((x[0] - node_a[0]),2) + pow(x[2],2);
+    double e2 = pow((x[0] - node_b[0]),2) + pow(x[2],2);
+    double h1 = (x[0] -node_a[0])*(x[1] - node_a[1]);
+    double h2 = (x[0]- node_b[0])*(x[1] - node_b[1]);
+    double m = (node_b[1] - node_a[1]) / (node_b[0] - node_a[0]);
+
+    double F = (m*e1 - h1) / (x[2]*r1) ;
+    double G = (m*e2 - h2) / (x[2]*r2) ;
+
+    if(F != G)
+        influence = atan2(F-G, 1+F*G);
+
+    return influence;
 }

@@ -99,6 +99,8 @@ private:
 
     double compute_source_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const;
 
+    double compute_doublet_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const;
+
 };
 
 #endif // SURFACE_H
