@@ -64,6 +64,8 @@ public:
 
     double compute_source_panel_influence(const int panel, const vector3d& node) const;
 
+    double compute_doublet_panel_influence(const int panel, const vector3d& node) const;
+
 
 private:
 

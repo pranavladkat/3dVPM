@@ -46,9 +46,7 @@ int main()
 
 
 /* Code notes:
- * In compute_source_edge_influence, need to multiply by fabs(z) rather than z.
- *
- *
- *
+ * In compute_source_edge_influence(), need to multiply by fabs(z) rather than z.
+ * In Solve(), pass "true" to get_collocation_point() function.
  *
  */

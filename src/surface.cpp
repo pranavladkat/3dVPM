@@ -312,3 +312,18 @@ double Surface :: compute_source_edge_influence(const vector3d& node_a,const vec
 
     return influence;
 }
+
+
+
+double Surface :: compute_doublet_panel_influence(const int panel, const vector3d& node) const{
+
+    vector3d transformed_node = transform_point_panel(panel,node);
+
+    double distance = transformed_node.norm();
+
+    if(distance > panel_farfield_distance[panel])
+        return (fourpi * panel_areas[panel] * transformed_node[2] * pow(distance,-3.0));
+
+
+
+}

@@ -42,9 +42,21 @@ void Solver :: solve(){
         //cout << std::scientific << source_strength[p] << endl;
     }
 
+    // compute source influence coefficient
     for(int p = 0; p < surface->n_panels(); p++){
         for(int n = 0; n < surface->n_panels(); n++){
-            cout << surface->compute_source_panel_influence(p,surface->get_collocation_point(n,false)) << endl;
+            surface->compute_source_panel_influence(p,surface->get_collocation_point(n,false));
+        }
+    }
+
+    // compute doublet influence coefficient
+    for(int p = 0; p < surface->n_panels(); p++){
+        for(int n = 0; n < surface->n_panels(); n++){
+
+            if(p == n)
+                cout << -0.5 << endl;
+            else
+                cout << surface->compute_doublet_panel_influence(p,surface->get_collocation_point(n,false)) << endl;
         }
     }
 
