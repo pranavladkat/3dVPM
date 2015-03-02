@@ -67,6 +67,8 @@ public:
 
 private:
 
+    const double fourpi;
+
     /** @brief collocation points of the panels */
     std::vector<vector3d> panel_collocation_points[2];
 
@@ -93,7 +95,7 @@ private:
 
     vector3d surface_orientation, previous_surface_orientation;
 
-    //double compute_source_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x);
+    double compute_source_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const;
 
 };
 

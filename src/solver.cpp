@@ -39,8 +39,13 @@ void Solver :: solve(){
     // compute source strength
     for(int p = 0; p < surface->n_panels(); p++){
         source_strength[p] = compute_source_strength(p);
-        cout << std::scientific << source_strength[p] << endl;
+        //cout << std::scientific << source_strength[p] << endl;
     }
+
+    for(int p = 0; p < surface->n_panels(); p++){
+        surface->compute_source_panel_influence(p,surface->get_collocation_point(p,false));
+    }
+
 
 }
 

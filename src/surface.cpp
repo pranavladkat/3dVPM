@@ -3,6 +3,7 @@
 using namespace std;
 
 Surface::Surface()
+    :fourpi(0.25 * M_1_PI)
 {
     linear_velocity = 0.0;
     angular_velocity = 0.0;
@@ -255,5 +256,32 @@ vector3d Surface :: get_panel_normal(const int i) const{
 double Surface :: compute_source_panel_influence(const int panel, const vector3d& node) const{
 
     vector3d transformed_node = transform_point_panel(panel,node);
+
+    double distance = transformed_node.norm();
+
+    if(distance > panel_farfield_distance[panel] ){
+        return (fourpi * panel_areas[panel] / distance);
+    }
+
+    double influence = 0.0;
+    for(size_t n = 0; n < panels[panel].size(); n++){
+
+        const vector3d& node_a = panel_local_coordinates[panel][n];
+        vector3d node_b;
+        if(n == panels[panel].size() - 1)
+            node_b = panel_local_coordinates[panel][0];
+        else
+            node_b = panel_local_coordinates[panel][n+1];
+
+        influence += compute_source_edge_influence(node_a, node_b,transformed_node);
+    }
+
+    return influence;
+
+}
+
+
+double Surface :: compute_source_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const{
+
 
 }
