@@ -28,6 +28,10 @@ private:
 
     double compute_source_strength(const int panel) const;
 
+    std::vector<std::vector<double>> source_influence;
+
+    std::vector<std::vector<double>> doublet_influence;
+
 public:
     Solver();
     ~Solver();

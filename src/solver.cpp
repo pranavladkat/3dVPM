@@ -42,33 +42,21 @@ void Solver :: solve(){
         //cout << std::scientific << source_strength[p] << endl;
     }
 
-    // compute source influence coefficient
-    for(int p = 0; p < surface->n_panels(); p++){
-        for(int n = 0; n < surface->n_panels(); n++){
-            surface->compute_source_panel_influence(p,surface->get_collocation_point(n,false));
-        }
-    }
+    // compute source and doublet coefficients and populate matrices
+    source_influence.clear();
+    source_influence.resize(surface->n_panels(),vector<double>(surface->n_panels()));
+    doublet_influence.clear();
+    doublet_influence.resize(surface->n_panels(),vector<double>(surface->n_panels()));
 
-    // compute doublet influence coefficient
-    for(int p = 0; p < surface->n_panels(); p++){
-        for(int n = 0; n < surface->n_panels(); n++){
-
-//            if(p == n)
-//                cout << -0.5 << endl;
-//            else
-//                cout << surface->compute_doublet_panel_influence(p,surface->get_collocation_point(n,false)) << endl;
-        }
-    }
-
-    //compute source and doublet coefficients
     for(int p = 0; p < surface->n_panels(); p++){
         for(int n = 0; n < surface->n_panels(); n++){
 
             pair<double,double> influence = surface->compute_source_doublet_panel_influence(p,surface->get_collocation_point(n,false));
             if(p == n)
                 influence.second = -0.5;
-            cout << influence.first << "\t\t" << influence.second << endl;
 
+            source_influence[n][p]  = influence.first;
+            doublet_influence[n][p] = influence.second;
         }
     }
 
@@ -82,3 +70,7 @@ double Solver::compute_source_strength(const int panel) const{
         vector3d vel = free_stream_velocity - surface->get_kinematic_velocity(node);
         return -(vel.dot(surface->get_panel_normal(panel)));
 }
+
+
+
+
