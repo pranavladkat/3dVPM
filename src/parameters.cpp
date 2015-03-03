@@ -9,3 +9,5 @@ double Parameters :: farfield_factor = 15.0;
 double Parameters :: trailing_edge_wake_shed_factor = 0.25;
 
 bool Parameters :: wake_shed_along_TE_bisector = false;
+
+bool Parameters :: unsteady_problem = false;

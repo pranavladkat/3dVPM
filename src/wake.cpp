@@ -76,10 +76,18 @@ void Wake :: build_topology(){
 
         vector<int> new_panel;
         new_panel.clear();
+        // panel order same as that of surface (anti-clockwise)
         new_panel.push_back((total_panels + spanwise_nodes) + it);
         new_panel.push_back((total_panels) + it);
         new_panel.push_back((total_panels + 1) + it);
         new_panel.push_back((total_panels + 1 + spanwise_nodes) + it);
+
+        // panel order opposite to that of surface (clockwise)
+        //new_panel.push_back((total_panels) + it);
+        //new_panel.push_back((total_panels + spanwise_nodes) + it);
+        //new_panel.push_back((total_panels + 1 + spanwise_nodes) + it);
+        //new_panel.push_back((total_panels + 1) + it);
+
         panels.push_back(new_panel);
         it++;
     }

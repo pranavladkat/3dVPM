@@ -15,6 +15,8 @@ public:
 
     static bool wake_shed_along_TE_bisector;
 
+    static bool unsteady_problem;
+
 };
 
 

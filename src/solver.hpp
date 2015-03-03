@@ -6,10 +6,13 @@
 #include <string>
 #include <memory>
 #include <cassert>
+#include <iomanip>
 
 #include "surface.hpp"
 #include "wake.hpp"
 #include "vtk_writer.hpp"
+
+#include "petscksp.h"
 
 
 class Solver
@@ -31,6 +34,10 @@ private:
     std::vector<std::vector<double>> source_influence;
 
     std::vector<std::vector<double>> doublet_influence;
+
+    Mat Doublet_influence_matrix;
+
+    Vec RHS, solution;
 
 public:
     Solver();
