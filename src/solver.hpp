@@ -35,9 +35,13 @@ private:
 
     std::vector<std::vector<double>> doublet_influence;
 
-    Mat Doublet_influence_matrix;
+    Mat doublet_influence_matrix;
 
     Vec RHS, solution;
+
+    void setup_linear_system();
+
+    void initialize_petsc_variables();
 
 public:
     Solver();
@@ -51,7 +55,7 @@ public:
 
     void set_free_stream_velocity(const vector3d&);
 
-    void solve();
+    void solve(int iteration = 0);
 
 };
 

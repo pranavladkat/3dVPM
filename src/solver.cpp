@@ -31,7 +31,7 @@ void Solver :: set_free_stream_velocity(const vector3d& vel){
     free_stream_velocity = vel;
 }
 
-void Solver :: solve(){
+void Solver :: solve(int iteration){
 
     source_strength.clear();
     source_strength.resize(surface->n_panels());
@@ -74,6 +74,7 @@ void Solver :: solve(){
 
         for(int sp = 0; sp < surface->n_panels(); sp++){
 
+            // remember to use negative sign when computing doublet coeff of the wake (as normal is in opposite direction)
             double influence = - wake->compute_doublet_panel_influence(wp,surface->get_collocation_point(sp,false));
 
             doublet_influence[sp][upper_panel] += influence;
@@ -89,6 +90,13 @@ void Solver :: solve(){
 //        cout << endl;
 //    }
 
+    // initialize petsc variables
+    if(iteration == 0)
+        initialize_petsc_variables();
+
+    // setup A and B of the AX = B
+    setup_linear_system();
+
 }
 
 
@@ -99,5 +107,58 @@ double Solver::compute_source_strength(const int panel) const{
         return -(vel.dot(surface->get_panel_normal(panel)));
 }
 
+void Solver :: initialize_petsc_variables(){
 
+    assert(surface->n_panels() > 0);
+
+    // create PETSc Vec RHS and solution
+    VecCreate(PETSC_COMM_WORLD,&RHS);
+    VecSetSizes(RHS,PETSC_DECIDE,surface->n_panels());
+    VecSetFromOptions(RHS);
+    VecSet(RHS,0.0);
+    VecDuplicate(RHS,&solution);
+    VecSet(solution,0.0);
+
+    // create PETSc Mat doublet_coefficient_matrix
+    MatCreateSeqDense(PETSC_COMM_WORLD,surface->n_panels(),surface->n_panels(),NULL,&doublet_influence_matrix);
+    MatSetFromOptions(doublet_influence_matrix);
+    MatSetUp(doublet_influence_matrix);
+    MatZeroEntries(doublet_influence_matrix);
+
+}
+
+void Solver :: setup_linear_system(){
+
+    // clear previous data, if any.
+    VecSet(RHS,0.0);
+    VecSet(solution,0.0);
+    MatZeroEntries(doublet_influence_matrix);
+
+    int col[surface->n_panels()];
+    double val[surface->n_panels()];
+
+    // setup column number for matrix insertion
+    for(int i = 0; i < surface->n_panels(); i++)
+        col[i] = i;
+
+    /* copy doublet_influence to doublet_influence_matrix */
+    for(int i = 0;i < surface->n_panels(); i++){
+        for(int j = 0; j < surface->n_panels(); j++){
+            val[j] = doublet_influence[i][j];
+        }
+        MatSetValues(doublet_influence_matrix,1,&i,surface->n_panels(),col,val,INSERT_VALUES);
+    }
+    MatAssemblyBegin(doublet_influence_matrix,MAT_FINAL_ASSEMBLY);
+    MatAssemblyEnd(doublet_influence_matrix,MAT_FINAL_ASSEMBLY);
+    MatSetOption(doublet_influence_matrix,MAT_NEW_NONZERO_LOCATIONS,PETSC_TRUE);
+
+    double *_RHS;
+    VecGetArray(RHS,&_RHS);
+
+    for(int i = 0; i < surface->n_panels(); i++){
+        for(int j = 0; j < surface->n_panels(); j++)
+            _RHS[i] += source_influence[i][j] * source_strength[j];
+    }
+    VecRestoreArray(RHS,&_RHS);
+}
 
