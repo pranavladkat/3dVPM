@@ -52,7 +52,7 @@ void Solver :: solve(int iteration){
     for(int n = 0; n < surface->n_panels(); n++){
         for(int p = 0; p < surface->n_panels(); p++){
 
-            pair<double,double> influence = surface->compute_source_doublet_panel_influence(p,surface->get_collocation_point(n,false));
+            pair<double,double> influence = surface->compute_source_doublet_panel_influence(p,surface->get_collocation_point(n,true));
             if(p == n)
                 influence.second = -0.5;
 
@@ -76,7 +76,7 @@ void Solver :: solve(int iteration){
         for(int sp = 0; sp < surface->n_panels(); sp++){
 
             // remember to use negative sign when computing doublet coeff of the wake (as normal is in opposite direction)
-            double influence = - wake->compute_doublet_panel_influence(wp,surface->get_collocation_point(sp,false));
+            double influence = - wake->compute_doublet_panel_influence(wp,surface->get_collocation_point(sp,true));
 
             doublet_influence[sp][upper_panel] += influence;
             doublet_influence[sp][lower_panel] -= influence;
@@ -96,6 +96,9 @@ void Solver :: solve(int iteration){
 
     log->write("solver-out",surface,doublet_strength,"mu",true);
 
+    compute_surface_velocity(4);
+
+    release_petsc_variables();
 }
 
 
@@ -113,22 +116,13 @@ void Solver :: initialize_petsc_variables(){
     // initialize PETSc
     PetscInitialize(&argc,&args,(char*)0,NULL);
 
-    // create PETSc Vec RHS and solution
-    VecCreate(PETSC_COMM_WORLD,&RHS);
-    VecSetSizes(RHS,PETSC_DECIDE,surface->n_panels());
-    VecSetFromOptions(RHS);
-    VecSet(RHS,0.0);
-    VecDuplicate(RHS,&solution);
-    VecSet(solution,0.0);
-
-    // create PETSc Mat doublet_coefficient_matrix
-    MatCreateSeqDense(PETSC_COMM_WORLD,surface->n_panels(),surface->n_panels(),NULL,&doublet_influence_matrix);
-    MatSetFromOptions(doublet_influence_matrix);
-    MatSetUp(doublet_influence_matrix);
-    MatZeroEntries(doublet_influence_matrix);
+    // create PETSc Vec RHS and solution, and PETSc Mat doublet_influence_matrix
+    petsc_vec_create(RHS     ,surface->n_panels());
+    petsc_vec_create(solution,surface->n_panels());
+    petsc_mat_create(doublet_influence_matrix,surface->n_panels(),surface->n_panels());
 
     // create KSP solver
-    KSPCreate(PETSC_COMM_WORLD,&ksp);
+    KSPCreate(PETSC_COMM_WORLD,&ksp_doublet);
 
 }
 
@@ -172,15 +166,15 @@ void Solver :: solve_linear_system(){
     int itn;
     PC pc;
 
-    KSPSetOperators(ksp,doublet_influence_matrix,doublet_influence_matrix);
-    KSPGetPC(ksp,&pc);
+    KSPSetOperators(ksp_doublet,doublet_influence_matrix,doublet_influence_matrix);
+    KSPGetPC(ksp_doublet,&pc);
     PCSetType(pc,PCLU);
-    KSPSetType(ksp,KSPPREONLY);
-    KSPSetTolerances(ksp,1e-16,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);
-    KSPSetFromOptions(ksp);
-    KSPSetUp(ksp);
-    KSPSolve(ksp,RHS,solution);
-    KSPGetIterationNumber(ksp,&itn);
+    KSPSetType(ksp_doublet,KSPPREONLY);
+    KSPSetTolerances(ksp_doublet,1e-16,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);
+    KSPSetFromOptions(ksp_doublet);
+    KSPSetUp(ksp_doublet);
+    KSPSolve(ksp_doublet,RHS,solution);
+    KSPGetIterationNumber(ksp_doublet,&itn);
     PetscPrintf(PETSC_COMM_WORLD,"Iterations taken for KSP: %d\n",itn+1);
 
     PetscReal *_SOL;
@@ -194,5 +188,129 @@ void Solver :: solve_linear_system(){
         doublet_strength[p] = _SOL[p];
 
     VecRestoreArray(solution,&_SOL);
+}
 
+void Solver :: release_petsc_variables(){
+    VecDestroy(&RHS);
+    VecDestroy(&solution);
+    MatDestroy(&doublet_influence_matrix);
+    KSPDestroy(&ksp_doublet);
+    PetscFinalize();
+}
+
+
+double Solver :: compute_surface_velocity(const int panel) const {
+
+    // computes tangential velocity using Least-Square approach
+    // refer : CFD : Principles and Applications, by J. Blazek (pg. 162)
+
+    const vector<int>& neighbour_panels = surface->panel_neighbours[panel];
+    assert(neighbour_panels.size() > 0);
+
+    Vec rhs, sol;
+    Mat mat;
+    KSP ksp;
+    PC pc;
+
+    petsc_vec_create(rhs,neighbour_panels.size());
+    petsc_vec_create(sol,3);
+    petsc_mat_create(mat,neighbour_panels.size(),3);
+    KSPCreate(PETSC_COMM_WORLD,&ksp);
+
+    PetscReal *_rhs, *_sol;
+    int col[3] = {0,1,2};
+    VecGetArray(rhs,&_rhs);
+    VecGetArray(sol,&_sol);
+
+    // set RHS
+    for(int i = 0; i < (int)neighbour_panels.size(); i++){
+        _rhs[i] = doublet_strength[neighbour_panels[i]] - doublet_strength[panel];
+        cout << _rhs[i] << endl;
+    }
+
+    // set matrix
+    for(int i = 0; i < (int)neighbour_panels.size(); i++){
+        vector3d node = surface->transform_point_panel(panel,surface->get_collocation_point(neighbour_panels[i],false));
+        double val[3];
+        val[0] = node[0]; val[1] = node[1]; val[2] = node[2];
+        MatSetValues(mat,1,&i,3,col,val,INSERT_VALUES);
+    }
+    MatAssemblyBegin(mat,MAT_FINAL_ASSEMBLY);
+    MatAssemblyEnd(mat,MAT_FINAL_ASSEMBLY);
+
+    //WriteMat(mat,"LSQ");
+
+    KSPSetOperators(ksp,mat,mat);
+    KSPGetPC(ksp,&pc);
+    PCSetType(pc,PCNONE);
+    KSPSetType(ksp,KSPLSQR);
+    //KSPSetTolerances(ksp,1e-16,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);
+    KSPSetFromOptions(ksp);
+    KSPSetUp(ksp);
+    KSPSolve(ksp,rhs,sol);
+
+    for(int i = 0; i < 3; i++)
+        cout << _sol[i] << endl;
+
+    VecRestoreArray(rhs,&_rhs);
+    VecRestoreArray(sol,&_sol);
+    VecDestroy(&rhs);
+    VecDestroy(&sol);
+    MatDestroy(&mat);
+    KSPDestroy(&ksp);
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// global functions
+
+void petsc_vec_create(Vec& vec, int size){
+
+    VecCreate(PETSC_COMM_WORLD,&vec);
+    VecSetSizes(vec,PETSC_DECIDE,size);
+    VecSetFromOptions(vec);
+    VecSet(vec,0.0);
+}
+
+
+void petsc_mat_create(Mat& mat, const int rows, const int cols){
+
+    MatCreateSeqDense(PETSC_COMM_WORLD,rows,cols,NULL,&mat);
+    MatSetFromOptions(mat);
+    MatSetUp(mat);
+    MatZeroEntries(mat);
+}
+
+void WriteMat(Mat& mat,char const *name){
+
+    PetscViewer viewer;
+    char filename[64] = "Mat_"; char pfix[12] = ".m";
+    strcat(filename,name); strcat(filename,pfix);
+    PetscObjectSetName((PetscObject)mat,name);
+    PetscViewerASCIIOpen(PETSC_COMM_WORLD, filename, &viewer);
+    PetscViewerSetFormat(viewer, PETSC_VIEWER_ASCII_MATLAB);
+    MatView(mat,viewer);
+    PetscViewerDestroy(&viewer);
 }

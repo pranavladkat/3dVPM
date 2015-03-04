@@ -4,6 +4,7 @@
 #include "vtk_writer.hpp"
 #include "solver.hpp"
 #include "wake.hpp"
+#include "domain.hpp"
 
 using namespace std;
 
@@ -16,20 +17,20 @@ int main(int argc, char** args)
 
     PLOT3D mesh;
 
-    string filename = "NACA0012_2.x";
+    string filename = "1panel.x";
 
     vector3d free_stream_velocity(1.0,0,0);
     double time_step = 1.0;
 
     mesh.set_surface(surface);
-    mesh.read_mesh(filename);
+    mesh.read_surface(filename);
     mesh.build_topology();
 
     surface->compute_panel_components();
 
     shared_ptr<Wake> wake(new Wake());
     wake->add_lifting_surface(surface);
-    wake->initialize(free_stream_velocity,time_step);
+    //wake->initialize(free_stream_velocity,time_step);
 
     shared_ptr<vtk_writer> writer(new vtk_writer());
 
@@ -39,7 +40,12 @@ int main(int argc, char** args)
     solver.add_logger(writer);
     solver.set_free_stream_velocity(free_stream_velocity);
 
-    solver.solve();
+    //solver.solve();
+
+
+    shared_ptr<Domain> domain(new Domain());
+    mesh.set_domain(domain);
+    mesh.read_domain("box.x");
 
     cout << "Hello World!" << endl;
     return 0;

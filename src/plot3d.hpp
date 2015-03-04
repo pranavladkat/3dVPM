@@ -9,14 +9,17 @@
 #include <fstream>
 
 #include "surface.hpp"
+#include "domain.hpp"
 
 class PLOT3D
 {
 private:
 
-    std::string filename;
+    std::string surface_filename, domain_filename;
 
     std::shared_ptr<Surface> surface;
+
+    std::shared_ptr<Domain> domain;
 
     /** @brief each block represents a separate Surface */
     int blocks;
@@ -35,16 +38,20 @@ public:
     PLOT3D();
     ~PLOT3D();
 
-    void set_filename(std::string);
+    void set_surface_filename(std::string);
 
     void set_surface(std::shared_ptr<Surface>);
 
     /** @brief Flips the normals of the surface */
     void flip_normals(bool);
 
-    void read_mesh(std::string name);
+    void read_surface(std::string name);
 
     void build_topology();
+
+    void set_domain(std::shared_ptr<Domain>);
+
+    void read_domain(std::string name);
 
 
 };

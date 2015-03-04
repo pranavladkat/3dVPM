@@ -68,6 +68,8 @@ public:
 
     std::pair<double,double> compute_source_doublet_panel_influence(const int panel, const vector3d& node) const;
 
+    vector3d transform_point_panel(int panel, const vector3d& x) const;
+
 
 private:
 
@@ -88,8 +90,6 @@ private:
     std::vector<std::vector<vector3d>> panel_local_coordinates;
 
     std::vector<double> panel_farfield_distance;
-
-    vector3d transform_point_panel(int panel, const vector3d& x) const;
 
     vector3d linear_velocity;
 

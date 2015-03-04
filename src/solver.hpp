@@ -41,15 +41,21 @@ private:
 
     Vec RHS, solution;
 
-    KSP ksp;
+    KSP ksp_doublet;
 
     void setup_linear_system();
 
     void initialize_petsc_variables();
 
+    void release_petsc_variables();
+
     void solve_linear_system();
 
     int argc; char** args;
+
+    std::vector<vector3d> surface_velocity;
+
+    double compute_surface_velocity(const int panel) const ;
 
 public:
     Solver(int argC,char** argS);
@@ -66,5 +72,10 @@ public:
     void solve(int iteration = 0);
 
 };
+
+
+extern void petsc_vec_create(Vec& vec, int size);
+extern void petsc_mat_create(Mat& mat, const int rows, const int cols);
+extern void WriteMat(Mat& mat,char const *name);
 
 #endif // SOLVER_H

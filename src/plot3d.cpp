@@ -12,8 +12,8 @@ PLOT3D::~PLOT3D()
 
 }
 
-void PLOT3D :: set_filename(std::string name){
-    filename = name;
+void PLOT3D :: set_surface_filename(std::string name){
+    surface_filename = name;
 }
 
 
@@ -27,12 +27,12 @@ void PLOT3D :: flip_normals(bool val){
 }
 
 
-void PLOT3D :: read_mesh(std::string name){
+void PLOT3D :: read_surface(std::string name){
 
-    set_filename(name);
+    set_surface_filename(name);
 
     // open mesh file to read
-    ifstream mesh(filename);
+    ifstream mesh(surface_filename);
 
     // assert if mesh file is open
     assert(mesh.is_open());
@@ -183,6 +183,53 @@ void PLOT3D :: build_topology(){
 //        cout << surface->upper_TE_panels[l] << endl;
 //    }
 
+}
+
+
+void PLOT3D :: set_domain(std::shared_ptr<Domain> dom){
+    domain = dom;
+}
+
+
+void PLOT3D :: read_domain(std::string name){
+
+    domain_filename = name;
+
+    // open mesh file to read
+    ifstream mesh(domain_filename);
+
+    // assert if mesh file is open
+    assert(mesh.is_open());
+
+    // read number of blocks
+    mesh >> blocks;
+
+    assert(blocks = 1);
+
+    int KMAX;
+    // read number of nodes in each direction
+    mesh >> IMAX >> JMAX >> KMAX;
+
+    domain->nodes.resize(IMAX*JMAX*KMAX);
+
+    //read_coordinates
+    for(int dim = 0; dim < 3; dim++){
+        int index = 0;
+        for(int i = 0; i < IMAX; i++){
+            for(int j = 0; j < JMAX; j++){
+                for(int k = 0; k < KMAX; k++){
+
+                    //cout << index << endl;
+                    mesh >> domain->nodes[index][dim];
+                    index++;
+
+                }
+            } /* end j loop */
+        } /* end i loop */
+    } /* end dim loop */
+
+//    for(size_t n = 0; n < domain->nodes.size(); n++)
+//        cout << domain->nodes[n] << endl;
 
 
 }
