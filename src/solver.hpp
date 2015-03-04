@@ -29,6 +29,8 @@ private:
 
     std::vector<double> source_strength;
 
+    std::vector<double> doublet_strength;
+
     double compute_source_strength(const int panel) const;
 
     std::vector<std::vector<double>> source_influence;
@@ -39,9 +41,13 @@ private:
 
     Vec RHS, solution;
 
+    KSP ksp;
+
     void setup_linear_system();
 
     void initialize_petsc_variables();
+
+    void solve_linear_system();
 
 public:
     Solver();

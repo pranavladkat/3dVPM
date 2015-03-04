@@ -96,6 +96,7 @@ void Solver :: solve(int iteration){
 
     // setup A and B of the AX = B
     setup_linear_system();
+    solve_linear_system();
 
 }
 
@@ -124,6 +125,9 @@ void Solver :: initialize_petsc_variables(){
     MatSetFromOptions(doublet_influence_matrix);
     MatSetUp(doublet_influence_matrix);
     MatZeroEntries(doublet_influence_matrix);
+
+    // create KSP solver
+    KSPCreate(PETSC_COMM_WORLD,&ksp);
 
 }
 
@@ -162,3 +166,34 @@ void Solver :: setup_linear_system(){
     VecRestoreArray(RHS,&_RHS);
 }
 
+void Solver :: solve_linear_system(){
+
+    int itn;
+    PC pc;
+
+    KSPSetOperators(ksp,doublet_influence_matrix,doublet_influence_matrix);
+    KSPGetPC(ksp,&pc);
+    PCSetType(pc,PCLU);
+    KSPSetType(ksp,KSPPREONLY);
+    KSPSetTolerances(ksp,1e-16,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);
+    KSPSetFromOptions(ksp);
+    KSPSetUp(ksp);
+    KSPSolve(ksp,RHS,solution);
+    KSPGetIterationNumber(ksp,&itn);
+    PetscPrintf(PETSC_COMM_WORLD,"Iterations taken for KSP: %d\n",itn+1);
+
+    PetscReal *_SOL;
+
+    VecGetArray(solution,&_SOL);
+
+    /* set doublet strength of panels */
+    doublet_strength.clear();
+    doublet_strength.resize(surface->n_panels());
+    for(int p = 0; p < surface->n_panels(); p++){
+        doublet_strength[p] = _SOL[p];
+        cout << doublet_strength[p] << endl;
+    }
+
+    VecRestoreArray(solution,&_SOL);
+
+}
