@@ -2,7 +2,8 @@
 
 using namespace std;
 
-Solver::Solver()
+Solver::Solver(const int argC,char** argS)
+    :argc(argC), args(argS)
 {
     free_stream_velocity = 0.0;
 }
@@ -83,20 +84,17 @@ void Solver :: solve(int iteration){
         TE_panel_counter++;
     }
 
-//    for(int p = 0; p < surface->n_panels(); p++){
-//        for(int n = 0; n < surface->n_panels(); n++){
-//            cout << fixed /*<< setprecision(6)*/ << setw(10) << scientific << doublet_influence[p][n] << "  ";
-//        }
-//        cout << endl;
-//    }
-
     // initialize petsc variables
     if(iteration == 0)
         initialize_petsc_variables();
 
     // setup A and B of the AX = B
     setup_linear_system();
+
+    // solve linear system
     solve_linear_system();
+
+    log->write("solver-out",surface,doublet_strength,"mu",true);
 
 }
 
@@ -111,6 +109,9 @@ double Solver::compute_source_strength(const int panel) const{
 void Solver :: initialize_petsc_variables(){
 
     assert(surface->n_panels() > 0);
+
+    // initialize PETSc
+    PetscInitialize(&argc,&args,(char*)0,NULL);
 
     // create PETSc Vec RHS and solution
     VecCreate(PETSC_COMM_WORLD,&RHS);
@@ -189,10 +190,8 @@ void Solver :: solve_linear_system(){
     /* set doublet strength of panels */
     doublet_strength.clear();
     doublet_strength.resize(surface->n_panels());
-    for(int p = 0; p < surface->n_panels(); p++){
+    for(int p = 0; p < surface->n_panels(); p++)
         doublet_strength[p] = _SOL[p];
-        cout << doublet_strength[p] << endl;
-    }
 
     VecRestoreArray(solution,&_SOL);
 

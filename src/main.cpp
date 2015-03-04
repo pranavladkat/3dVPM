@@ -10,14 +10,13 @@ using namespace std;
 int main(int argc, char** args)
 {
 
-    // initialize PETSc
-    PetscInitialize(&argc,&args,(char*)0,NULL);
+    Parameters::static_wake_length = 10;
 
     shared_ptr<Surface> surface(new Surface);
 
     PLOT3D mesh;
 
-    string filename = "apame.x";
+    string filename = "NACA0012_2.x";
 
     vector3d free_stream_velocity(1.0,0,0);
     double time_step = 1.0;
@@ -34,7 +33,7 @@ int main(int argc, char** args)
 
     shared_ptr<vtk_writer> writer(new vtk_writer());
 
-    Solver solver;
+    Solver solver(argc,args);
     solver.add_surface(surface);
     solver.add_wake(wake);
     solver.add_logger(writer);

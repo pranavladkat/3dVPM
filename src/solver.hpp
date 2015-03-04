@@ -49,8 +49,10 @@ private:
 
     void solve_linear_system();
 
+    int argc; char** args;
+
 public:
-    Solver();
+    Solver(int argC,char** argS);
     ~Solver();
 
     void add_surface(const std::shared_ptr<Surface>);

@@ -24,20 +24,17 @@ void Wake :: initialize(const vector3d& free_stream_velocity, double dt){
     nodes.resize(2*lifting_surface->n_trailing_edge_nodes());
 
     for(int n = 0; n < lifting_surface->n_trailing_edge_nodes(); n++ ){
+
+        vector3d distance(0,0,0);
         vector3d node(lifting_surface->nodes[lifting_surface->trailing_edge_nodes[n]]);
         vector3d vel = lifting_surface->get_kinematic_velocity(node) + free_stream_velocity;
-        node[0] = node[0] + vel[0] * dt *  Parameters::trailing_edge_wake_shed_factor;
-        node[1] = node[1] + vel[1] * dt *  Parameters::trailing_edge_wake_shed_factor;
-        node[2] = node[2] + vel[2] * dt *  Parameters::trailing_edge_wake_shed_factor;
 
-        if(Parameters::wake_shed_along_TE_bisector){
-            vector3d vec = lifting_surface->get_trailing_edge_bisector(n);
-            node[0] = node[0] * vec[0];
-            node[1] = node[1] * vec[1];
-            node[2] = node[2] * vec[2];
-        }
+        if(Parameters::static_wake)
+            distance = lifting_surface->get_trailing_edge_bisector(n) * Parameters::static_wake_length;
+        else
+            distance = vel * dt * Parameters::trailing_edge_wake_shed_factor;
 
-        nodes[n] = node;
+        nodes[n] = node + distance;
     }
 
     int i = 0;

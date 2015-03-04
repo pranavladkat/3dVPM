@@ -1,6 +1,7 @@
 #ifndef PARAMETERS_HPP
 #define PARAMETERS_HPP
 
+
 class Parameters {
 
 public:
@@ -13,9 +14,11 @@ public:
 
     static double trailing_edge_wake_shed_factor;
 
-    static bool wake_shed_along_TE_bisector;
-
     static bool unsteady_problem;
+
+    static bool static_wake;
+
+    static double static_wake_length;
 
 };
 
