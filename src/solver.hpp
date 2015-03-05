@@ -78,4 +78,8 @@ extern void petsc_vec_create(Vec& vec, int size);
 extern void petsc_mat_create(Mat& mat, const int rows, const int cols);
 extern void WriteMat(Mat& mat,char const *name);
 
+extern "C" void dgelsd_( int* m, int* n, int* nrhs, double* a, int* lda,
+                         double* b, int* ldb, double* s, double* rcond, int* rank,
+                         double* work, int* lwork, int* iwork, int* info );
+
 #endif // SOLVER_H

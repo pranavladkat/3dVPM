@@ -94,6 +94,8 @@ void Solver :: solve(int iteration){
     // solve linear system
     solve_linear_system();
 
+
+
     log->write_surface_data("solver-out",surface,doublet_strength,"mu",true);
 
     compute_surface_velocity(4);
@@ -207,57 +209,60 @@ double Solver :: compute_surface_velocity(const int panel) const {
     const vector<int>& neighbour_panels = surface->panel_neighbours[panel];
     assert(neighbour_panels.size() > 0);
 
-    Vec rhs, sol;
-    Mat mat;
-    KSP ksp;
-    PC pc;
+    double rhs[neighbour_panels.size()];
+    double mat[3*neighbour_panels.size()];
 
-    petsc_vec_create(rhs,neighbour_panels.size());
-    petsc_vec_create(sol,3);
-    petsc_mat_create(mat,neighbour_panels.size(),3);
-    KSPCreate(PETSC_COMM_WORLD,&ksp);
-
-    PetscReal *_rhs, *_sol;
-    int col[3] = {0,1,2};
-    VecGetArray(rhs,&_rhs);
-    VecGetArray(sol,&_sol);
-
-    // set RHS
-    for(int i = 0; i < (int)neighbour_panels.size(); i++){
-        _rhs[i] = doublet_strength[neighbour_panels[i]] - doublet_strength[panel];
-        cout << _rhs[i] << endl;
+    // setup RHS
+    for(size_t i = 0; i < neighbour_panels.size(); i++){
+        rhs[i] = doublet_strength[neighbour_panels[i]] - doublet_strength[panel];
+        //cout << rhs[i] << endl;
     }
 
-    // set matrix
-    for(int i = 0; i < (int)neighbour_panels.size(); i++){
-        vector3d node = surface->transform_point_panel(panel,surface->get_collocation_point(neighbour_panels[i],false));
-        double val[3];
-        val[0] = node[0]; val[1] = node[1]; val[2] = node[2];
-        MatSetValues(mat,1,&i,3,col,val,INSERT_VALUES);
+    // setup matrix (in column major layout)
+    for(size_t i = 0; i < neighbour_panels.size(); i++){
+        for(size_t j = 0; j < 3; j++){
+            mat[j*neighbour_panels.size()+i] = surface->get_collocation_point(neighbour_panels[i],false)[j] ;
+            //mat[i*3+j] = surface->get_collocation_point(neighbour_panels[i],false)[j] ;
+            //cout << j*neighbour_panels.size()+i << endl;
+            //cout << surface->get_collocation_point(neighbour_panels[i],false)[j] << "\t";
+        }
+        //cout << endl;
     }
-    MatAssemblyBegin(mat,MAT_FINAL_ASSEMBLY);
-    MatAssemblyEnd(mat,MAT_FINAL_ASSEMBLY);
 
-    //WriteMat(mat,"LSQ");
+    /* Local variables to dgelsd_ */
+    int m = neighbour_panels.size(),n = 3, nrhs = 1, lda = m, ldb = max(m,n), info, lwork, rank;
+    double rcond = -1.0;
+    double wkopt;
+    /* iwork dimension should be at least 3*min(m,n)*nlvl + 11*min(m,n),
+       where nlvl = max( 0, int( log_2( min(m,n)/(smlsiz+1) ) )+1 )
+       and smlsiz = 25 */
+    int iwork[11*min(m,n)];
+    double s[m];
 
-    KSPSetOperators(ksp,mat,mat);
-    KSPGetPC(ksp,&pc);
-    PCSetType(pc,PCNONE);
-    KSPSetType(ksp,KSPLSQR);
-    //KSPSetTolerances(ksp,1e-16,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);
-    KSPSetFromOptions(ksp);
-    KSPSetUp(ksp);
-    KSPSolve(ksp,rhs,sol);
+    /* Query and allocate the optimal workspace */
+    lwork = -1;
+    dgelsd_( &m, &n, &nrhs, mat, &lda, rhs, &ldb, s, &rcond, &rank, &wkopt, &lwork, iwork, &info );
+    lwork = (int)wkopt;
+    double work[lwork];
 
-    for(int i = 0; i < 3; i++)
-        cout << _sol[i] << endl;
+    /* Solve the equations A*X = B */
+    dgelsd_( &m, &n, &nrhs, mat, &lda, rhs, &ldb, s, &rcond, &rank, work, &lwork, iwork, &info );
 
-    VecRestoreArray(rhs,&_rhs);
-    VecRestoreArray(sol,&_sol);
-    VecDestroy(&rhs);
-    VecDestroy(&sol);
-    MatDestroy(&mat);
-    KSPDestroy(&ksp);
+    for(size_t j = 0; j < 3; j++)
+        cout << rhs[j] << endl;
+
+
+
+//    int it = 0;
+//    for(size_t i = 0; i < neighbour_panels.size(); i++){
+//        for(size_t j = 0; j < 3; j++){
+
+//            cout << mat[it] << "\t";
+//            it++;
+//        }
+//        cout << endl;
+//    }
+
 
     return 0;
 }

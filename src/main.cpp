@@ -40,14 +40,14 @@ int main(int argc, char** args)
     solver.add_logger(writer);
     solver.set_free_stream_velocity(free_stream_velocity);
 
-    //solver.solve();
+    solver.solve();
 
 
-    shared_ptr<Domain> domain(new Domain());
-    mesh.set_domain(domain);
-    mesh.read_domain("box.x");
+//    shared_ptr<Domain> domain(new Domain());
+//    mesh.set_domain(domain);
+//    mesh.read_domain("box.x");
 
-    writer->write_domain_mesh("box",domain);
+//    writer->write_domain_mesh("box",domain);
 
     cout << "Hello World!" << endl;
     return 0;
