@@ -14,7 +14,7 @@ vtk_writer::~vtk_writer()
 }
 
 
-void vtk_writer :: write_mesh(string filename,std::shared_ptr<Surface> surface){
+void vtk_writer :: write_surface_mesh(string filename,std::shared_ptr<Surface> surface){
 
     string name = filename + file_extension;
 
@@ -72,5 +72,19 @@ void vtk_writer :: write_mesh(string filename,std::shared_ptr<Surface> surface){
         ofile << endl;
 
         ofile << "CELL_DATA " << surface->n_panels() << std::endl;
+}
+
+
+void vtk_writer :: write_domain_mesh(std::string filename,std::shared_ptr<Domain> domain){
+
+    string name = filename + ".m";
+
+    ofstream ofile(name);
+
+    ofile << "x = [" << endl;
+    for(int n = 0; n < domain->nodes.size(); n++)
+        ofile << domain->nodes[n] << endl;
+    ofile << "];" << endl;
+
 }
 

@@ -17,7 +17,7 @@ int main(int argc, char** args)
 
     PLOT3D mesh;
 
-    string filename = "1panel.x";
+    string filename = "apame.x";
 
     vector3d free_stream_velocity(1.0,0,0);
     double time_step = 1.0;
@@ -46,6 +46,8 @@ int main(int argc, char** args)
     shared_ptr<Domain> domain(new Domain());
     mesh.set_domain(domain);
     mesh.read_domain("box.x");
+
+    writer->write_domain_mesh("box",domain);
 
     cout << "Hello World!" << endl;
     return 0;

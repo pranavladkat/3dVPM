@@ -94,7 +94,7 @@ void Solver :: solve(int iteration){
     // solve linear system
     solve_linear_system();
 
-    log->write("solver-out",surface,doublet_strength,"mu",true);
+    log->write_surface_data("solver-out",surface,doublet_strength,"mu",true);
 
     compute_surface_velocity(4);
 
