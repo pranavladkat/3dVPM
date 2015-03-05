@@ -98,7 +98,8 @@ void Solver :: solve(int iteration){
 
     log->write_surface_data("solver-out",surface,doublet_strength,"mu",true);
 
-    compute_surface_velocity(4);
+    for(int p = 0; p < surface->n_panels(); p++)
+        compute_surface_velocity(p);
 
     release_petsc_variables();
 }
@@ -187,7 +188,7 @@ void Solver :: solve_linear_system(){
     doublet_strength.clear();
     doublet_strength.resize(surface->n_panels());
     for(int p = 0; p < surface->n_panels(); p++)
-        doublet_strength[p] = _SOL[p];
+        doublet_strength[p] = _SOL[p];    
 
     VecRestoreArray(solution,&_SOL);
 }
@@ -201,41 +202,39 @@ void Solver :: release_petsc_variables(){
 }
 
 
-double Solver :: compute_surface_velocity(const int panel) const {
+vector3d Solver :: compute_surface_velocity(const int panel) const {
 
     // computes tangential velocity using Least-Square approach
     // refer : CFD : Principles and Applications, by J. Blazek (pg. 162)
 
     const vector<int>& neighbour_panels = surface->panel_neighbours[panel];
-    assert(neighbour_panels.size() > 0);
+    int neighbour_size = (int)neighbour_panels.size();
+    assert(neighbour_size > 0);
 
-    double rhs[neighbour_panels.size()];
-    double mat[3*neighbour_panels.size()];
+    int dim = 2;
+    double rhs[neighbour_size];
+    double mat[dim*neighbour_size];
 
     // setup RHS
-    for(size_t i = 0; i < neighbour_panels.size(); i++){
+    for(int i = 0; i < neighbour_size; i++)
         rhs[i] = doublet_strength[neighbour_panels[i]] - doublet_strength[panel];
-        //cout << rhs[i] << endl;
-    }
 
     // setup matrix (in column major layout)
-    for(size_t i = 0; i < neighbour_panels.size(); i++){
-        for(size_t j = 0; j < 3; j++){
-            mat[j*neighbour_panels.size()+i] = surface->get_collocation_point(neighbour_panels[i],false)[j] ;
-            //mat[i*3+j] = surface->get_collocation_point(neighbour_panels[i],false)[j] ;
-            //cout << j*neighbour_panels.size()+i << endl;
-            //cout << surface->get_collocation_point(neighbour_panels[i],false)[j] << "\t";
+    for(int i = 0; i < neighbour_size; i++){
+
+        vector3d neighbour_node = surface->transform_point_panel(panel,surface->get_collocation_point(neighbour_panels[i],false));
+        for(int j = 0; j < dim; j++){
+            mat[j*neighbour_size+i] = neighbour_node[j];
         }
-        //cout << endl;
     }
 
     /* Local variables to dgelsd_ */
-    int m = neighbour_panels.size(),n = 3, nrhs = 1, lda = m, ldb = max(m,n), info, lwork, rank;
+    int m = neighbour_size, n = dim, nrhs = 1, lda = m, ldb = max(m,n), info, lwork, rank;
     double rcond = -1.0;
     double wkopt;
     /* iwork dimension should be at least 3*min(m,n)*nlvl + 11*min(m,n),
-       where nlvl = max( 0, int( log_2( min(m,n)/(smlsiz+1) ) )+1 )
-       and smlsiz = 25 */
+     * where nlvl = max( 0, int( log_2( min(m,n)/(smlsiz+1) ) )+1 )
+     * and smlsiz = 25 */
     int iwork[11*min(m,n)];
     double s[m];
 
@@ -248,23 +247,7 @@ double Solver :: compute_surface_velocity(const int panel) const {
     /* Solve the equations A*X = B */
     dgelsd_( &m, &n, &nrhs, mat, &lda, rhs, &ldb, s, &rcond, &rank, work, &lwork, iwork, &info );
 
-    for(size_t j = 0; j < 3; j++)
-        cout << rhs[j] << endl;
-
-
-
-//    int it = 0;
-//    for(size_t i = 0; i < neighbour_panels.size(); i++){
-//        for(size_t j = 0; j < 3; j++){
-
-//            cout << mat[it] << "\t";
-//            it++;
-//        }
-//        cout << endl;
-//    }
-
-
-    return 0;
+    return surface->transform_vector_panel_inverse(panel,vector3d(rhs[0],rhs[1],0));
 }
 
 

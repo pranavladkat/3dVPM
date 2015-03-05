@@ -70,6 +70,8 @@ public:
 
     vector3d transform_point_panel(int panel, const vector3d& x) const;
 
+    vector3d transform_vector_panel_inverse(int panel, const vector3d& x) const;
+
 
 private:
 

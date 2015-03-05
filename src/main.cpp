@@ -30,7 +30,7 @@ int main(int argc, char** args)
 
     shared_ptr<Wake> wake(new Wake());
     wake->add_lifting_surface(surface);
-    //wake->initialize(free_stream_velocity,time_step);
+    wake->initialize(free_stream_velocity,time_step);
 
     shared_ptr<vtk_writer> writer(new vtk_writer());
 

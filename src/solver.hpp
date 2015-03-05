@@ -55,7 +55,7 @@ private:
 
     std::vector<vector3d> surface_velocity;
 
-    double compute_surface_velocity(const int panel) const ;
+    vector3d compute_surface_velocity(const int panel) const ;
 
 public:
     Solver(int argC,char** argS);
@@ -81,5 +81,12 @@ extern void WriteMat(Mat& mat,char const *name);
 extern "C" void dgelsd_( int* m, int* n, int* nrhs, double* a, int* lda,
                          double* b, int* ldb, double* s, double* rcond, int* rank,
                          double* work, int* lwork, int* iwork, int* info );
+
+extern "C" {
+void dgesv_(int *n, int *nrhs,  double *a,  int  *lda,
+            int *ipivot, double *b, int *ldb, int *info);
+}
+
+
 
 #endif // SOLVER_H

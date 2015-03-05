@@ -436,3 +436,21 @@ std::pair<double,double> Surface :: compute_source_doublet_edge_influence(const 
 
     return edge_influence;
 }
+
+
+vector3d Surface :: transform_vector_panel_inverse(int panel, const vector3d& x) const{
+
+    vector3d transformed_vector;
+
+    const vector3d &l = panel_longitudinals[panel];
+    const vector3d &n = panel_normals[panel];
+    const vector3d &t = panel_transverse[panel];
+
+    transformed_vector[0] = x[0]*l[0] + x[1]*t[0] + x[2]*n[0];
+    transformed_vector[1] = x[0]*l[1] + x[1]*t[1] + x[2]*n[1];
+    transformed_vector[2] = x[0]*l[2] + x[1]*t[2] + x[2]*n[2];
+
+    return transformed_vector;
+}
+
+
