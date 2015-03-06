@@ -94,14 +94,14 @@ void Solver :: solve(int iteration){
     // solve linear system
     solve_linear_system();
 
-
-
-    log->write_surface_data("solver-out",surface,doublet_strength,"mu",true);
-
+    // compute surface velocity
+    surface_velocity.clear();
+    surface_velocity.resize(surface->n_panels());
     for(int p = 0; p < surface->n_panels(); p++){
-        cout << compute_surface_velocity(p) << endl;
-
+        surface_velocity[p] = compute_surface_velocity(p) ;
     }
+
+    log->write_surface_data("solver-out",surface,surface_velocity,"V",true);
 
     release_petsc_variables();
 }
@@ -242,6 +242,7 @@ vector3d Solver :: compute_surface_velocity(const int panel) const {
         }
     }
 
+    /* solve least square problem */
     /* Local variables to dgelsd_ */
     int m = neighbour_size, n = dim, nrhs = 1, lda = m, ldb = max(m,n), info, lwork, rank;
     double rcond = -1.0;
