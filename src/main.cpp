@@ -61,4 +61,5 @@ int main(int argc, char** args)
  * - In Solve(), pass "true" to get_collocation_point() function.
  * - While applying Kutta-condition, make sure only trailing edge wake panels are considered
  * - Test calc of lower and upper panel during kutta condition for wake panels > spanwise panels
+ * - Test add/subtract kinematic vel in panel coordinate in compute_surface_velociy().
  */

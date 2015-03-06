@@ -453,4 +453,17 @@ vector3d Surface :: transform_vector_panel_inverse(int panel, const vector3d& x)
     return transformed_vector;
 }
 
+vector3d Surface :: transform_vector_panel(int panel, const vector3d& x) const{
 
+    vector3d transformed_vector;
+
+    const vector3d &l = panel_longitudinals[panel];
+    const vector3d &n = panel_normals[panel];
+    const vector3d &t = panel_transverse[panel];
+
+    transformed_vector[0] = x[0]*l[0] + x[1]*l[1] + x[2]*l[2];
+    transformed_vector[1] = x[0]*t[0] + x[1]*t[1] + x[2]*t[2];
+    transformed_vector[2] = x[0]*n[0] + x[1]*n[1] + x[2]*n[2];
+
+    return transformed_vector;
+}

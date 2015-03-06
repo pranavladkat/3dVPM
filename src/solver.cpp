@@ -98,8 +98,10 @@ void Solver :: solve(int iteration){
 
     log->write_surface_data("solver-out",surface,doublet_strength,"mu",true);
 
-    for(int p = 0; p < surface->n_panels(); p++)
-        compute_surface_velocity(p);
+    for(int p = 0; p < surface->n_panels(); p++){
+        cout << compute_surface_velocity(p) << endl;
+
+    }
 
     release_petsc_variables();
 }
@@ -204,14 +206,24 @@ void Solver :: release_petsc_variables(){
 
 vector3d Solver :: compute_surface_velocity(const int panel) const {
 
-    // computes tangential velocity using Least-Square approach
-    // refer : CFD : Principles and Applications, by J. Blazek (pg. 162)
+    vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel,false)) - free_stream_velocity;
+
+    vector3d local_velocity_transformed = surface->transform_vector_panel(panel,local_velocity);
+
+    /* computes tangential velocity using Least-Square approach
+     * refer : CFD : Principles and Applications, by J. Blazek (pg. 162)
+     *
+     * Least square problem solved with Lapack's divide and conquor routine : dgelsd_
+     * Example impliementation of dgelsd_ :
+     * https://software.intel.com/sites/products/documentation/doclib/mkl_sa/11/mkl_lapack_examples/dgelsd_ex.c.htm
+     * More info on LLSQ : http://www.netlib.org/lapack/lug/node27.html
+     */
 
     const vector<int>& neighbour_panels = surface->panel_neighbours[panel];
     int neighbour_size = (int)neighbour_panels.size();
     assert(neighbour_size > 0);
 
-    int dim = 2;
+    int dim = 2;    // neglect variation in z
     double rhs[neighbour_size];
     double mat[dim*neighbour_size];
 
@@ -222,7 +234,9 @@ vector3d Solver :: compute_surface_velocity(const int panel) const {
     // setup matrix (in column major layout)
     for(int i = 0; i < neighbour_size; i++){
 
+        // transform CP of neighbouring node to panel's coordinates
         vector3d neighbour_node = surface->transform_point_panel(panel,surface->get_collocation_point(neighbour_panels[i],false));
+
         for(int j = 0; j < dim; j++){
             mat[j*neighbour_size+i] = neighbour_node[j];
         }
@@ -247,10 +261,13 @@ vector3d Solver :: compute_surface_velocity(const int panel) const {
     /* Solve the equations A*X = B */
     dgelsd_( &m, &n, &nrhs, mat, &lda, rhs, &ldb, s, &rcond, &rank, work, &lwork, iwork, &info );
 
-    return surface->transform_vector_panel_inverse(panel,vector3d(rhs[0],rhs[1],0));
+    // notice negative sign on rhs terms
+    // also notice third component is kept zero
+    vector3d total_velocity = vector3d(-rhs[0],-rhs[1],0) - vector3d(local_velocity_transformed[0],local_velocity_transformed[1],0);
+
+    // transform back to global coordinates
+    return surface->transform_vector_panel_inverse(panel,total_velocity);
 }
-
-
 
 
 
