@@ -32,7 +32,7 @@ void Solver :: set_free_stream_velocity(const vector3d& vel){
     free_stream_velocity = vel;
 }
 
-void Solver :: solve(int iteration){
+void Solver :: solve(const double dt, int iteration){
 
     source_strength.clear();
     source_strength.resize(surface->n_panels());
@@ -101,7 +101,18 @@ void Solver :: solve(int iteration){
         surface_velocity[p] = compute_surface_velocity(p) ;
     }
 
-    log->write_surface_data("solver-out",surface,surface_velocity,"V",true);
+    // compute coefficient of pressure
+    pressure_coefficient.clear();
+    pressure_coefficient.resize(surface->n_panels());
+    surface_potential.clear();
+    surface_potential.resize(surface->n_panels());
+    for(int p = 0; p < surface->n_panels(); p++){
+        pressure_coefficient[p] = compute_pressure_coefficient(p,iteration,dt) ;
+        cout << pressure_coefficient[p] << endl;
+    }
+
+    //log->write_surface_data("solver-out",surface,surface_velocity,"V",true);
+    //log->write_surface_data("solver-out",surface,pressure_coefficient,"CP",false);
 
     release_petsc_variables();
 }
@@ -109,7 +120,7 @@ void Solver :: solve(int iteration){
 
 double Solver::compute_source_strength(const int panel) const{
 
-        vector3d& node = surface->get_collocation_point(panel,false);
+        const vector3d& node = surface->get_collocation_point(panel,false);
         vector3d vel = free_stream_velocity - surface->get_kinematic_velocity(node);
         return -(vel.dot(surface->get_panel_normal(panel)));
 }
@@ -272,6 +283,30 @@ vector3d Solver :: compute_surface_velocity(const int panel) const {
 
 
 
+double Solver :: compute_pressure_coefficient(const int& panel, const int& iteration, const double &dt) {
+
+    // phi = - doublet_strength
+    surface_potential[panel] = - doublet_strength[panel];
+
+    // add contribution from free stream velocity and body velocity (phi_infinity = U*x+V*y+W*z)
+    vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel,false)) - free_stream_velocity;
+    surface_potential[panel] -= local_velocity.dot(surface->get_collocation_point(panel,false));
+
+    //compute dphidt
+    double dphidt = 0;
+    if(iteration > 0 && Parameters::unsteady_problem){
+        assert(dt > 0);
+        dphidt = (surface_potential[panel] - surface_potential_old[panel]) / dt ;
+    }
+
+    // reference velocity = free_stream_velocity (make sure to change for different problems!)
+    const vector3d& reference_velocity = free_stream_velocity;
+
+    // compute pressure_coefficient
+    double Cp = 1.0 - (surface_velocity[panel].squared_norm() + 2.0 * dphidt) / reference_velocity.squared_norm();
+
+    return Cp;
+}
 
 
 

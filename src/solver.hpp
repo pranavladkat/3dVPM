@@ -57,6 +57,14 @@ private:
 
     vector3d compute_surface_velocity(const int panel) const ;
 
+    std::vector<double> pressure_coefficient;
+
+    std::vector<double> surface_potential;
+
+    std::vector<double> surface_potential_old;
+
+    double compute_pressure_coefficient(const int& panel, const int& iteration, const double& dt);
+
 public:
     Solver(int argC,char** argS);
     ~Solver();
@@ -69,7 +77,7 @@ public:
 
     void set_free_stream_velocity(const vector3d&);
 
-    void solve(int iteration = 0);
+    void solve(const double dt, int iteration = 0);
 
 };
 

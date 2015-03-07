@@ -40,7 +40,7 @@ int main(int argc, char** args)
     solver.add_logger(writer);
     solver.set_free_stream_velocity(free_stream_velocity);
 
-    solver.solve();
+    solver.solve(time_step);
 
 
 //    shared_ptr<Domain> domain(new Domain());
