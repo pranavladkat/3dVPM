@@ -63,6 +63,16 @@ private:
 
     double compute_pressure_coefficient(const int& panel, const int& iteration, const double& dt);
 
+    vector3d body_forces, body_force_coefficients;
+
+    vector3d compute_body_forces() const ;
+
+    vector3d compute_body_force_coefficients() const ;
+
+    vector3d reference_velocity;
+
+    double density;
+
 public:
     Solver(int argC,char** argS);
     ~Solver();
@@ -74,6 +84,10 @@ public:
     void add_logger(const std::shared_ptr<vtk_writer>);
 
     void set_free_stream_velocity(const vector3d&);
+
+    void set_reference_velocity(const vector3d&);
+
+    void set_fluid_density(const double value);
 
     void solve(const double dt, int iteration = 0);
 

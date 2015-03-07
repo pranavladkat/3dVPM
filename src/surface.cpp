@@ -467,3 +467,8 @@ vector3d Surface :: transform_vector_panel(int panel, const vector3d& x) const{
 
     return transformed_vector;
 }
+
+
+double Surface :: get_panel_area(const int& panel) const{
+    return panel_areas[panel];
+}

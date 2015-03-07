@@ -74,6 +74,8 @@ public:
 
     vector3d transform_vector_panel(int panel, const vector3d& x) const;
 
+    double get_panel_area(const int& panel) const;
+
 
 private:
 

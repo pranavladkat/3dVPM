@@ -21,6 +21,7 @@ int main(int argc, char** args)
 
     vector3d free_stream_velocity(1.0,0,0);
     double time_step = 1.0;
+    double fluid_density = 1.225;
 
     mesh.set_surface(surface);
     mesh.read_surface(filename);
@@ -39,7 +40,8 @@ int main(int argc, char** args)
     solver.add_wake(wake);
     solver.add_logger(writer);
     solver.set_free_stream_velocity(free_stream_velocity);
-
+    solver.set_reference_velocity(free_stream_velocity);
+    solver.set_fluid_density(fluid_density);
     solver.solve(time_step);
 
 
@@ -59,4 +61,5 @@ int main(int argc, char** args)
  * - While applying Kutta-condition, make sure only trailing edge wake panels are considered
  * - Test calc of lower and upper panel during kutta condition for wake panels > spanwise panels
  * - Test add/subtract kinematic vel in panel coordinate in compute_surface_velociy().
+ * - How to compute span_area in wind turbine case?
  */

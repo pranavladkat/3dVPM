@@ -5,7 +5,9 @@ using namespace std;
 Solver::Solver(const int argC,char** argS)
     :argc(argC), args(argS)
 {
-    free_stream_velocity = 0.0;
+    free_stream_velocity = 0;
+    reference_velocity = 0;
+    density = 0;
 }
 
 Solver::~Solver()
@@ -34,6 +36,14 @@ void Solver :: add_logger(const std::shared_ptr<vtk_writer> writer){
 
 void Solver :: set_free_stream_velocity(const vector3d& vel){
     free_stream_velocity = vel;
+}
+
+void Solver :: set_reference_velocity(const vector3d& vel){
+    reference_velocity = vel;
+}
+
+void Solver :: set_fluid_density(const double value){
+    density = value;
 }
 
 void Solver :: solve(const double dt, int iteration){
@@ -66,7 +76,6 @@ void Solver :: solve(const double dt, int iteration){
             //cout << std::scientific << influence.first << "\t" << influence.second << endl;
         }
     }
-
 
     // apply Kutta-condition
     int TE_panel_counter = 0;
@@ -112,11 +121,18 @@ void Solver :: solve(const double dt, int iteration){
     surface_potential.resize(surface->n_panels());
     for(int p = 0; p < surface->n_panels(); p++){
         pressure_coefficient[p] = compute_pressure_coefficient(p,iteration,dt) ;
-        //cout << pressure_coefficient[p] << endl;
+        cout << pressure_coefficient[p] << endl;
     }
+
+    //compute body forces
+    body_forces =  compute_body_forces();
+
+    //compute body force coefficients
+    body_force_coefficients = compute_body_force_coefficients();
 
     log->write_surface_data("solver-out",surface,surface_velocity,"V",true);
     log->write_surface_data("solver-out",surface,pressure_coefficient,"CP",false);
+    log->write_surface_mesh("mesh",wake);
 
 }
 
@@ -142,7 +158,6 @@ void Solver :: initialize_petsc_variables(){
 
     // create KSP solver
     KSPCreate(PETSC_COMM_WORLD,&ksp_doublet);
-
 }
 
 void Solver :: setup_linear_system(){
@@ -294,8 +309,7 @@ double Solver :: compute_pressure_coefficient(const int& panel, const int& itera
         dphidt = (surface_potential[panel] - surface_potential_old[panel]) / dt ;
     }
 
-    // reference velocity = free_stream_velocity (make sure to change for different problems!)
-    const vector3d& reference_velocity = free_stream_velocity;
+    assert(reference_velocity.squared_norm() != 0);
 
     // compute pressure_coefficient
     double Cp = 1.0 - (surface_velocity[panel].squared_norm() + 2.0 * dphidt) / reference_velocity.squared_norm();
@@ -304,9 +318,38 @@ double Solver :: compute_pressure_coefficient(const int& panel, const int& itera
 }
 
 
+vector3d Solver :: compute_body_forces() const {
+
+    assert(density > 0);
+
+    vector3d Force(0,0,0);
+
+    double dynamic_pressure = 0.5 * density * reference_velocity.squared_norm();
+
+    // compute force
+    for(int p = 0; p < surface->n_panels(); p++){
+        Force = Force - surface->get_panel_normal(p) * dynamic_pressure * pressure_coefficient[p] * surface->get_panel_area(p);
+    }
+
+    return Force;
+}
 
 
+vector3d Solver :: compute_body_force_coefficients() const {
 
+    double dynamic_pressure = 0.5 * density * reference_velocity.squared_norm();
+
+    // compute planform-area
+    // S = 0.5 * sum_of ( panel_area * vector_normal_to_free_stream )
+    // need to varify for wind-turbine case
+    double planform_area = 0;
+    for(int p = 0; p < surface->n_panels(); p++){
+        planform_area += fabs(surface->get_panel_normal(p)[2] * surface->get_panel_area(p));
+    }
+    planform_area *= 0.5 ;
+
+    return body_forces / (dynamic_pressure * planform_area);
+}
 
 
 
