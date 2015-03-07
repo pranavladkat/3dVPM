@@ -47,8 +47,6 @@ private:
 
     void initialize_petsc_variables();
 
-    void release_petsc_variables();
-
     void solve_linear_system();
 
     int argc; char** args;

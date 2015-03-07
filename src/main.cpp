@@ -56,9 +56,6 @@ int main(int argc, char** args)
 
 
 /* Changes to do in the code:
- * - In compute_source_edge_influence(), need to multiply by fabs(z) rather than z.
- * - In compute_source_doublet_edge_influence(), need to multiply by fabs(z) rather than z.
- * - In Solve(), pass "true" to get_collocation_point() function.
  * - While applying Kutta-condition, make sure only trailing edge wake panels are considered
  * - Test calc of lower and upper panel during kutta condition for wake panels > spanwise panels
  * - Test add/subtract kinematic vel in panel coordinate in compute_surface_velociy().

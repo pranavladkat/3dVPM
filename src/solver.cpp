@@ -10,7 +10,11 @@ Solver::Solver(const int argC,char** argS)
 
 Solver::~Solver()
 {
-
+    VecDestroy(&RHS);
+    VecDestroy(&solution);
+    MatDestroy(&doublet_influence_matrix);
+    KSPDestroy(&ksp_doublet);
+    PetscFinalize();
 }
 
 void Solver :: add_surface(const std::shared_ptr<Surface> surf){
@@ -108,13 +112,12 @@ void Solver :: solve(const double dt, int iteration){
     surface_potential.resize(surface->n_panels());
     for(int p = 0; p < surface->n_panels(); p++){
         pressure_coefficient[p] = compute_pressure_coefficient(p,iteration,dt) ;
-        cout << pressure_coefficient[p] << endl;
+        //cout << pressure_coefficient[p] << endl;
     }
 
-    //log->write_surface_data("solver-out",surface,surface_velocity,"V",true);
-    //log->write_surface_data("solver-out",surface,pressure_coefficient,"CP",false);
+    log->write_surface_data("solver-out",surface,surface_velocity,"V",true);
+    log->write_surface_data("solver-out",surface,pressure_coefficient,"CP",false);
 
-    release_petsc_variables();
 }
 
 
@@ -204,14 +207,6 @@ void Solver :: solve_linear_system(){
         doublet_strength[p] = _SOL[p];    
 
     VecRestoreArray(solution,&_SOL);
-}
-
-void Solver :: release_petsc_variables(){
-    VecDestroy(&RHS);
-    VecDestroy(&solution);
-    MatDestroy(&doublet_influence_matrix);
-    KSPDestroy(&ksp_doublet);
-    PetscFinalize();
 }
 
 
