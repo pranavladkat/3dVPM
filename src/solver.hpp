@@ -73,6 +73,8 @@ private:
 
     double density;
 
+    std::vector<double> wake_doublet_strength;
+
 public:
     Solver(int argC,char** argS);
     ~Solver();

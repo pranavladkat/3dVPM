@@ -21,22 +21,30 @@ void Wake :: initialize(const vector3d& free_stream_velocity, double dt){
     assert(lifting_surface != NULL);
     assert(lifting_surface->n_trailing_edge_nodes() > 0);
 
+    // allocate memory for nodes
     nodes.resize(2*lifting_surface->n_trailing_edge_nodes());
 
+    // compute node location of the first row of panels (in the free stream)
     for(int n = 0; n < lifting_surface->n_trailing_edge_nodes(); n++ ){
 
-        vector3d distance(0,0,0);
+        // get the node at trailing edge
         vector3d node(lifting_surface->nodes[lifting_surface->trailing_edge_nodes[n]]);
-        vector3d vel = lifting_surface->get_kinematic_velocity(node) + free_stream_velocity;
+
+        // compute new location of node in the downstream
+        vector3d distance(0,0,0);
+        // get local velocity at trailing node
+        vector3d vel = - lifting_surface->get_kinematic_velocity(node) + free_stream_velocity;
 
         if(Parameters::static_wake)
             distance = lifting_surface->get_trailing_edge_bisector(n) * Parameters::static_wake_length;
         else
             distance = vel * dt * Parameters::trailing_edge_wake_shed_factor;
 
+        // add computed distance to the node to get new node location
         nodes[n] = node + distance;
     }
 
+    // second row of wake-nodes matches with trailing edge nodes
     int i = 0;
     for(size_t n = lifting_surface->n_trailing_edge_nodes(); n < nodes.size(); n++ ){
         nodes[n] = lifting_surface->nodes[lifting_surface->trailing_edge_nodes[i]];
@@ -50,7 +58,7 @@ void Wake :: initialize(const vector3d& free_stream_velocity, double dt){
 
 }
 
-
+// builds panel neighbors
 void Wake :: build_topology(){
     assert(nodes.size() > 0);
 

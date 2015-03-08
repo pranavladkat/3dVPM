@@ -104,7 +104,7 @@ void Solver :: solve(const double dt, int iteration){
     // setup A and B of the AX = B
     setup_linear_system();
 
-    // solve linear system
+    // solve linear system & set unknown doublet strengths
     solve_linear_system();
 
     // compute surface velocity
@@ -124,15 +124,35 @@ void Solver :: solve(const double dt, int iteration){
         //cout << pressure_coefficient[p] << endl;
     }
 
+
+    // compute wake strength only if problem is unsteady
+    if(Parameters::unsteady_problem){
+
+        // push back wake strength for the current time step
+        for(int TE_panel = 0; TE_panel < surface->n_trailing_edge_panels(); TE_panel++){
+
+            int upper_panel = surface->upper_TE_panels[TE_panel];
+            int lower_panel = surface->lower_TE_panels[TE_panel];
+
+            cout << "upper = " << upper_panel << "\t lower = " << lower_panel << endl;
+
+            double wake_strenth = doublet_strength[upper_panel] - doublet_strength[lower_panel];
+            wake_doublet_strength.push_back(wake_strenth);
+        }
+
+
+    }
+
+
     //compute body forces
     body_forces =  compute_body_forces();
 
     //compute body force coefficients
     body_force_coefficients = compute_body_force_coefficients();
 
-    //log->write_surface_data("solver-out",surface,surface_velocity,"V",true);
-    //log->write_surface_data("solver-out",surface,pressure_coefficient,"CP",false);
-    //log->write_surface_mesh("mesh",wake);
+    log->write_surface_data("solver-out-surface",surface,surface_velocity,"V",true);
+    log->write_surface_data("solver-out-surface",surface,pressure_coefficient,"CP",false);
+    log->write_surface_mesh("solver-out-wake",wake);
 
 }
 
@@ -185,6 +205,7 @@ void Solver :: setup_linear_system(){
     MatAssemblyEnd(doublet_influence_matrix,MAT_FINAL_ASSEMBLY);
     MatSetOption(doublet_influence_matrix,MAT_NEW_NONZERO_LOCATIONS,PETSC_TRUE);
 
+    // setup RHS
     double *_RHS;
     VecGetArray(RHS,&_RHS);
 
