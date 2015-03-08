@@ -76,6 +76,8 @@ public:
 
     double get_panel_area(const int& panel) const;
 
+    vector3d compute_source_panel_unit_velocity(const int& panel, const vector3d& node) const;
+
 
 private:
 
@@ -110,6 +112,9 @@ private:
     double compute_doublet_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const;
 
     std::pair<double,double> compute_source_doublet_edge_influence(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const;
+
+    vector3d compute_source_panel_edge_unit_velocity(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const;
+
 
 };
 

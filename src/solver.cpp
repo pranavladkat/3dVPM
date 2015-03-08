@@ -130,9 +130,9 @@ void Solver :: solve(const double dt, int iteration){
     //compute body force coefficients
     body_force_coefficients = compute_body_force_coefficients();
 
-    log->write_surface_data("solver-out",surface,surface_velocity,"V",true);
-    log->write_surface_data("solver-out",surface,pressure_coefficient,"CP",false);
-    log->write_surface_mesh("mesh",wake);
+    //log->write_surface_data("solver-out",surface,surface_velocity,"V",true);
+    //log->write_surface_data("solver-out",surface,pressure_coefficient,"CP",false);
+    //log->write_surface_mesh("mesh",wake);
 
 }
 

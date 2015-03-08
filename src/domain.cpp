@@ -28,3 +28,8 @@ int Domain :: get_JMAX() const{
 int Domain :: get_KMAX() const{
     return KMAX;
 }
+
+
+int Domain :: n_nodes() const{
+    return static_cast<int>(nodes.size());
+}

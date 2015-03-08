@@ -30,6 +30,8 @@ public:
 
     int get_KMAX() const ;
 
+    int n_nodes() const ;
+
 };
 
 #endif // DOMAIN_H

@@ -472,3 +472,80 @@ vector3d Surface :: transform_vector_panel(int panel, const vector3d& x) const{
 double Surface :: get_panel_area(const int& panel) const{
     return panel_areas[panel];
 }
+
+
+vector3d Surface :: compute_source_panel_unit_velocity(const int& panel, const vector3d& node) const{
+
+    vector3d panel_velocity(0,0,0);
+
+    vector3d transformed_node = transform_point_panel(panel,node);
+
+    double distance = transformed_node.norm();
+
+    if(distance > panel_farfield_distance[panel]){
+
+        panel_velocity[0] = panel_areas[panel] * transformed_node[0] * fourpi * pow(distance,-3.0);
+        panel_velocity[1] = panel_areas[panel] * transformed_node[1] * fourpi * pow(distance,-3.0);
+        panel_velocity[2] = panel_areas[panel] * transformed_node[2] * fourpi * pow(distance,-3.0);
+        panel_velocity = transform_vector_panel_inverse(panel,panel_velocity);
+        return panel_velocity;
+    }
+
+    for(size_t n = 0; n < panels[panel].size(); n++){
+
+        int next_node = n + 1;
+        if(n == panels[panel].size() - 1)
+            next_node = 0;
+
+        const vector3d& node_a = panel_local_coordinates[panel][n];
+        const vector3d& node_b = panel_local_coordinates[panel][next_node];
+
+        panel_velocity = panel_velocity + compute_source_panel_edge_unit_velocity(node_a, node_b,transformed_node);
+    }
+    panel_velocity = transform_vector_panel_inverse(panel,panel_velocity);
+
+    return panel_velocity * fourpi;
+}
+
+
+vector3d Surface :: compute_source_panel_edge_unit_velocity(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const{
+
+    vector3d panel_velocity(0,0,0);
+
+    double r1 = (x-node_a).norm();
+    double r2 = (x-node_b).norm();
+    double d12 = (node_b - node_a).norm();
+
+    double e1 = pow((x[0] - node_a[0]),2) + pow(x[2],2);
+    double e2 = pow((x[0] - node_b[0]),2) + pow(x[2],2);
+    double h1 = (x[0] -node_a[0])*(x[1] - node_a[1]);
+    double h2 = (x[0]- node_b[0])*(x[1] - node_b[1]);
+    double m = (node_b[1] - node_a[1]) / (node_b[0] - node_a[0]);
+
+    if(d12 > Parameters::inversion_tolerance && (r1+r2-d12) > Parameters::inversion_tolerance){
+        panel_velocity[0] = (node_b[1] - node_a[1]) / d12 * log((r1+r2-d12)/(r1+r2+d12));
+        panel_velocity[1] = (node_a[0] - node_b[0]) / d12 * log((r1+r2-d12)/(r1+r2+d12));
+    }
+
+    double F = (m*e1 - h1) / (x[2]*r1) ;
+    double G = (m*e2 - h2) / (x[2]*r2) ;
+
+    if(F != G)
+        panel_velocity[2] = atan2(F-G, 1+F*G);
+
+    return panel_velocity;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

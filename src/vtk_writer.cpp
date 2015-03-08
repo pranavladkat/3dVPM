@@ -91,6 +91,7 @@ void vtk_writer :: write_domain_mesh(std::string filename,std::shared_ptr<Domain
     for(size_t n = 0; n < domain->nodes.size(); n++ ){
         ofile << domain->nodes[n] << endl;
     }
+    ofile << endl;
 
     ofile << "POINT_DATA " << domain->nodes.size() << std::endl;
 

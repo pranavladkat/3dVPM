@@ -17,7 +17,7 @@ int main(int argc, char** args)
 
     PLOT3D mesh;
 
-    string filename = "apame.x";
+    string filename = "1panel.x";
 
     vector3d free_stream_velocity(1.0,0,0);
     double time_step = 1.0;
@@ -29,27 +29,35 @@ int main(int argc, char** args)
 
     surface->compute_panel_components();
 
-    shared_ptr<Wake> wake(new Wake());
-    wake->add_lifting_surface(surface);
-    wake->initialize(free_stream_velocity,time_step);
+//    shared_ptr<Wake> wake(new Wake());
+//    wake->add_lifting_surface(surface);
+//    wake->initialize(free_stream_velocity,time_step);
 
     shared_ptr<vtk_writer> writer(new vtk_writer());
 
-    Solver solver(argc,args);
-    solver.add_surface(surface);
-    solver.add_wake(wake);
-    solver.add_logger(writer);
-    solver.set_free_stream_velocity(free_stream_velocity);
-    solver.set_reference_velocity(free_stream_velocity);
-    solver.set_fluid_density(fluid_density);
-    solver.solve(time_step);
+//    Solver solver(argc,args);
+//    solver.add_surface(surface);
+//    solver.add_wake(wake);
+//    solver.add_logger(writer);
+//    solver.set_free_stream_velocity(free_stream_velocity);
+//    solver.set_reference_velocity(free_stream_velocity);
+//    solver.set_fluid_density(fluid_density);
+//    solver.solve(time_step);
 
 
     shared_ptr<Domain> domain(new Domain());
     mesh.set_domain(domain);
     mesh.read_domain("box.x");
 
-    writer->write_domain_mesh("domain-test",domain);
+    vector<vector3d> domain_velocity;
+    domain_velocity.resize(domain->n_nodes());
+    for(int i = 0; i < domain->n_nodes(); i++){
+        domain_velocity[i] = surface->compute_source_panel_unit_velocity(0,domain->nodes[i]);
+        cout << domain_velocity[i] << endl;
+    }
+
+    writer->write_surface_mesh("surface-test",surface);
+    writer->write_domain_data("domain-test",domain,domain_velocity,"V",true);
 
     cout << "Hello World!" << endl;
     return 0;
