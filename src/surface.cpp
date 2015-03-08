@@ -478,19 +478,24 @@ vector3d Surface :: compute_source_panel_unit_velocity(const int& panel, const v
 
     vector3d panel_velocity(0,0,0);
 
+    // transform node in panel coordinates
     vector3d transformed_node = transform_point_panel(panel,node);
 
     double distance = transformed_node.norm();
 
+    // farfield formulation
     if(distance > panel_farfield_distance[panel]){
 
         panel_velocity[0] = panel_areas[panel] * transformed_node[0] * fourpi * pow(distance,-3.0);
         panel_velocity[1] = panel_areas[panel] * transformed_node[1] * fourpi * pow(distance,-3.0);
         panel_velocity[2] = panel_areas[panel] * transformed_node[2] * fourpi * pow(distance,-3.0);
+
+        // transform velocity back in global coordinates
         panel_velocity = transform_vector_panel_inverse(panel,panel_velocity);
         return panel_velocity;
     }
 
+    // calculate velocity due to panel edges
     for(size_t n = 0; n < panels[panel].size(); n++){
 
         int next_node = n + 1;
@@ -502,6 +507,8 @@ vector3d Surface :: compute_source_panel_unit_velocity(const int& panel, const v
 
         panel_velocity = panel_velocity + compute_source_panel_edge_unit_velocity(node_a, node_b,transformed_node);
     }
+
+    // transform velocity back in global coordinates
     panel_velocity = transform_vector_panel_inverse(panel,panel_velocity);
 
     return panel_velocity * fourpi;
@@ -510,7 +517,7 @@ vector3d Surface :: compute_source_panel_unit_velocity(const int& panel, const v
 
 vector3d Surface :: compute_source_panel_edge_unit_velocity(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const{
 
-    vector3d panel_velocity(0,0,0);
+    vector3d edge_velocity(0,0,0);
 
     double r1 = (x-node_a).norm();
     double r2 = (x-node_b).norm();
@@ -523,25 +530,93 @@ vector3d Surface :: compute_source_panel_edge_unit_velocity(const vector3d& node
     double m = (node_b[1] - node_a[1]) / (node_b[0] - node_a[0]);
 
     if(d12 > Parameters::inversion_tolerance && (r1+r2-d12) > Parameters::inversion_tolerance){
-        panel_velocity[0] = (node_b[1] - node_a[1]) / d12 * log((r1+r2-d12)/(r1+r2+d12));
-        panel_velocity[1] = (node_a[0] - node_b[0]) / d12 * log((r1+r2-d12)/(r1+r2+d12));
+        edge_velocity[0] = (node_b[1] - node_a[1]) / d12 * log((r1+r2-d12)/(r1+r2+d12));
+        edge_velocity[1] = (node_a[0] - node_b[0]) / d12 * log((r1+r2-d12)/(r1+r2+d12));
     }
 
     double F = (m*e1 - h1) / (x[2]*r1) ;
     double G = (m*e2 - h2) / (x[2]*r2) ;
 
     if(F != G)
-        panel_velocity[2] = atan2(F-G, 1+F*G);
+        edge_velocity[2] = atan2(F-G, 1+F*G);
+
+    return edge_velocity;
+}
+
+
+
+vector3d Surface :: compute_doublet_panel_unit_velocity(const int& panel, const vector3d& node) const{
+
+    vector3d panel_velocity(0,0,0);
+
+    // transform node in panel coordinates
+    vector3d transformed_node = transform_point_panel(panel,node);
+
+    double distance = transformed_node.norm();
+
+    // farfield formulation
+    if(distance > panel_farfield_distance[panel]){
+
+        panel_velocity[0] = 3 * panel_areas[panel] * transformed_node[0] * transformed_node[2] * fourpi * pow(distance,-5.0);
+        panel_velocity[1] = 3 * panel_areas[panel] * transformed_node[1] * transformed_node[2] * fourpi * pow(distance,-5.0);
+        panel_velocity[2] = - panel_areas[panel] * (pow(transformed_node[0],2.0) + pow(transformed_node[1],2.0)
+                          - 2 * pow(transformed_node[2],2.0)) * fourpi * pow(distance,-5.0);
+        // transform to global coordinates
+        panel_velocity = transform_vector_panel_inverse(panel,panel_velocity);
+        return panel_velocity;
+    }
+
+    // calculate velocity due to panel edges using Vortex Line formulation
+    // node does not need to be transformed to panel local coordinates
+    for(size_t n = 0; n < panels[panel].size(); n++){
+
+        int previous_node = n - 1;
+        if(n == 0)
+            previous_node = panels[panel].size() - 1;
+
+        const vector3d& node_a = nodes[panels[panel][previous_node]];
+        const vector3d& node_b = nodes[panels[panel][n]];
+
+        // send nodes in global coordinates (not in panel local coordinates)
+        panel_velocity = panel_velocity - compute_doublet_panel_edge_unit_velocity(node_a, node_b, node);
+    }
 
     return panel_velocity;
 }
 
 
+vector3d Surface :: compute_doublet_panel_edge_unit_velocity(const vector3d& node_a,const vector3d& node_b,const vector3d& x) const{
 
+    // computes velocity using vortex line method
 
+    vector3d edge_velocity(0,0,0);
 
+    double r1r2x, r1r2y, r1r2z, r1r2_sq;
+    double r1,r2, r0r1,r0r2, coef;
 
+    r1r2x =   (x[1] - node_a[1]) * (x[2] - node_b[2]) - (x[2] - node_a[2]) * (x[1] - node_b[1]);
+    r1r2y = - (x[0] - node_a[0]) * (x[2] - node_b[2]) + (x[2] - node_a[2]) * (x[0] - node_b[0]);
+    r1r2z =   (x[0] - node_a[0]) * (x[1] - node_b[1]) - (x[1] - node_a[1]) * (x[0] - node_b[0]);
 
+    r1r2_sq = r1r2x*r1r2x + r1r2y*r1r2y + r1r2z*r1r2z;
+
+    r1 = (x - node_a).norm();
+    r2 = (x - node_b).norm();
+
+    if( r1 > Parameters::inversion_tolerance && r2 > Parameters::inversion_tolerance && r1r2_sq > Parameters::inversion_tolerance ){
+
+        r0r1 = (node_b[0] - node_a[0])*(x[0] - node_a[0]) + (node_b[1] - node_a[1])*(x[1] - node_a[1]) + (node_b[2] - node_a[2])*(x[2] - node_a[2]);
+        r0r2 = (node_b[0] - node_a[0])*(x[0] - node_b[0]) + (node_b[1] - node_a[1])*(x[1] - node_b[1]) + (node_b[2] - node_a[2])*(x[2] - node_b[2]);
+
+        coef = fourpi/(r1r2_sq)*(r0r1/r1 - r0r2/r2);
+
+        edge_velocity[0] = r1r2x*coef;
+        edge_velocity[1] = r1r2y*coef;
+        edge_velocity[2] = r1r2z*coef;
+    }
+
+    return edge_velocity;
+}
 
 
 

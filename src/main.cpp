@@ -52,8 +52,8 @@ int main(int argc, char** args)
     vector<vector3d> domain_velocity;
     domain_velocity.resize(domain->n_nodes());
     for(int i = 0; i < domain->n_nodes(); i++){
-        domain_velocity[i] = surface->compute_source_panel_unit_velocity(0,domain->nodes[i]);
-        cout << domain_velocity[i] << endl;
+        domain_velocity[i] = surface->compute_doublet_panel_unit_velocity(0,domain->nodes[i]);
+        //cout << domain_velocity[i] << endl;
     }
 
     writer->write_surface_mesh("surface-test",surface);
