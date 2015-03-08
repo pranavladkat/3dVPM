@@ -77,14 +77,21 @@ void vtk_writer :: write_surface_mesh(string filename,std::shared_ptr<Surface> s
 
 void vtk_writer :: write_domain_mesh(std::string filename,std::shared_ptr<Domain> domain){
 
-    string name = filename + ".m";
+    string name = filename + ".vtk";
 
     ofstream ofile(name);
 
-    ofile << "x = [" << endl;
-    for(int n = 0; n < domain->nodes.size(); n++)
+    ofile << "# vtk DataFile Version 2.0" << endl;
+    ofile << "OUTPUT by 3D-VPM\n";
+    ofile << "ASCII" << endl;
+    ofile << "DATASET STRUCTURED_GRID" << endl;
+    ofile << "DIMENSIONS " << domain->get_IMAX() << " " << domain->get_JMAX() << " " << domain->get_KMAX() << endl;
+    ofile << "POINTS " << domain->get_IMAX()*domain->get_JMAX()*domain->get_KMAX() << " double" << endl;
+
+    for(size_t n = 0; n < domain->nodes.size(); n++ ){
         ofile << domain->nodes[n] << endl;
-    ofile << "];" << endl;
+    }
+
 
 }
 

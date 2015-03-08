@@ -121,7 +121,7 @@ void Solver :: solve(const double dt, int iteration){
     surface_potential.resize(surface->n_panels());
     for(int p = 0; p < surface->n_panels(); p++){
         pressure_coefficient[p] = compute_pressure_coefficient(p,iteration,dt) ;
-        cout << pressure_coefficient[p] << endl;
+        //cout << pressure_coefficient[p] << endl;
     }
 
     //compute body forces

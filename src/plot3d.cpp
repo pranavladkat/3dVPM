@@ -210,22 +210,24 @@ void PLOT3D :: read_domain(std::string name){
     // read number of nodes in each direction
     mesh >> IMAX >> JMAX >> KMAX;
 
+    domain->set_domain_ranges(IMAX,JMAX,KMAX);
+
     domain->nodes.resize(IMAX*JMAX*KMAX);
 
     //read_coordinates
     for(int dim = 0; dim < 3; dim++){
         int index = 0;
-        for(int i = 0; i < IMAX; i++){
+        for(int k = 0; k < KMAX; k++){
             for(int j = 0; j < JMAX; j++){
-                for(int k = 0; k < KMAX; k++){
+                for(int i = 0; i < IMAX; i++){
 
                     //cout << index << endl;
                     mesh >> domain->nodes[index][dim];
                     index++;
 
-                }
+                } /* end i loop */
             } /* end j loop */
-        } /* end i loop */
+        } /* end k loop */
     } /* end dim loop */
 
 //    for(size_t n = 0; n < domain->nodes.size(); n++)
