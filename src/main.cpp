@@ -47,9 +47,9 @@ int main(int argc, char** args)
 
     shared_ptr<Domain> domain(new Domain());
     mesh.set_domain(domain);
-    mesh.read_domain("domain.x");
+    mesh.read_domain("box.x");
 
-    //writer->write_domain_mesh("domain-test",domain);
+    writer->write_domain_mesh("domain-test",domain);
 
     cout << "Hello World!" << endl;
     return 0;

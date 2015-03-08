@@ -64,33 +64,28 @@ public:
             write_domain_mesh(filename,domain);
         }
 
-        std::ofstream ofile(filename + ".m", std::ios::app);
-
-        ofile << name << " = [" << std::endl;
-        for(int p = 0; p < (int)data.size(); p++)
-            ofile << data[p] << std::endl;
-        ofile << "];" << std::endl;
+        std::ofstream ofile(filename + ".vtk", std::ios::app);
 
         switch (sizeof(T)) {
         case 4:
-            std::string scalar_f = "5," + name + "(:));";
-            ofile << ofile << "scatter3(x(:,1),x(:,2),x(:,3)," << scalar_f << std::endl;
-            ofile << "axis equal tight;" << std::endl;
+            ofile << "SCALARS " << name << " double 1" << std::endl;
+            ofile << "LOOKUP_TABLE default" << std::endl;
             break;
         case 8:
-            std::string scalar_d = "5," + name + "(:));";
-            ofile << ofile << "scatter3(x(:,1),x(:,2),x(:,3)," << scalar_d << std::endl;
-            ofile << "axis equal tight;" << std::endl;
+            ofile << "SCALARS " << name << " double 1" << std::endl;
+            ofile << "LOOKUP_TABLE default" << std::endl;
             break;
         case 24:
-            std::string quiver = name + "(:,1)," + name + "(:,2)," + name + "(:,3));";
-            ofile << "quiver(x(:,1),x(:,2),x(:,3)," << quiver << std::endl;
+            ofile << "VECTORS " << name << " double" << std::endl;
             break;
         default:
             std::cerr << "UNKNOWN DATATYPE!!!" << std::endl;
             break;
         }
 
+        for(int p = 0; p < (int)data.size(); p++)
+            ofile << data[p] << std::endl;
+        ofile << std::endl;
     }
 
 };

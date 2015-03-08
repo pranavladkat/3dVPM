@@ -214,7 +214,7 @@ void PLOT3D :: read_domain(std::string name){
 
     domain->nodes.resize(IMAX*JMAX*KMAX);
 
-    //read_coordinates
+    //read_coordinates (read such that fastest index is x, then y, then z so that it can produce correct vtk output)
     for(int dim = 0; dim < 3; dim++){
         int index = 0;
         for(int k = 0; k < KMAX; k++){
