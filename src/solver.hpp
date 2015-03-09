@@ -75,6 +75,8 @@ private:
 
     std::vector<double> wake_doublet_strength;
 
+    vector3d compute_total_velocity(const vector3d& x) const;
+
 public:
     Solver(int argC,char** argS);
     ~Solver();
@@ -93,9 +95,12 @@ public:
 
     void solve(const double dt, int iteration = 0);
 
+    void convect_wake(const double& dt);
+
 };
 
 
+// global functions
 extern void petsc_vec_create(Vec& vec, int size);
 extern void petsc_mat_create(Mat& mat, const int rows, const int cols);
 extern void WriteMat(Mat& mat,char const *name);
@@ -104,10 +109,8 @@ extern "C" void dgelsd_( int* m, int* n, int* nrhs, double* a, int* lda,
                          double* b, int* ldb, double* s, double* rcond, int* rank,
                          double* work, int* lwork, int* iwork, int* info );
 
-extern "C" {
-void dgesv_(int *n, int *nrhs,  double *a,  int  *lda,
-            int *ipivot, double *b, int *ldb, int *info);
-}
+extern "C" void dgesv_(int *n, int *nrhs,  double *a,  int  *lda,
+                       int *ipivot, double *b, int *ldb, int *info);
 
 
 

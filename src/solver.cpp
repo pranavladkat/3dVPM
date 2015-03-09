@@ -134,13 +134,11 @@ void Solver :: solve(const double dt, int iteration){
             int upper_panel = surface->upper_TE_panels[TE_panel];
             int lower_panel = surface->lower_TE_panels[TE_panel];
 
-            cout << "upper = " << upper_panel << "\t lower = " << lower_panel << endl;
+            assert(doublet_strength.size() > 0);
 
             double wake_strenth = doublet_strength[upper_panel] - doublet_strength[lower_panel];
             wake_doublet_strength.push_back(wake_strenth);
         }
-
-
     }
 
 
@@ -152,6 +150,8 @@ void Solver :: solve(const double dt, int iteration){
 
     log->write_surface_data("solver-out-surface",surface,surface_velocity,"V",true);
     log->write_surface_data("solver-out-surface",surface,pressure_coefficient,"CP",false);
+    log->write_surface_data("solver-out-surface",surface,doublet_strength,"Mu",false);
+    log->write_surface_data("solver-out-surface",surface,source_strength,"Sigma",false);
     log->write_surface_mesh("solver-out-wake",wake);
 
 }
@@ -161,7 +161,7 @@ double Solver::compute_source_strength(const int panel) const{
 
         const vector3d& node = surface->get_collocation_point(panel,false);
         vector3d vel = free_stream_velocity - surface->get_kinematic_velocity(node);
-        return -(vel.dot(surface->get_panel_normal(panel)));
+        return (vel.dot(surface->get_panel_normal(panel)));
 }
 
 void Solver :: initialize_petsc_variables(){
@@ -211,7 +211,7 @@ void Solver :: setup_linear_system(){
 
     for(int i = 0; i < surface->n_panels(); i++){
         for(int j = 0; j < surface->n_panels(); j++)
-            _RHS[i] += source_influence[i][j] * source_strength[j];
+            _RHS[i] -= source_influence[i][j] * source_strength[j];
     }
     VecRestoreArray(RHS,&_RHS);
 }
@@ -373,10 +373,47 @@ vector3d Solver :: compute_body_force_coefficients() const {
 }
 
 
+void Solver :: convect_wake(const double& dt){
+
+    assert(Parameters::static_wake == false);
+    assert(wake->n_panels() > 0);
+
+    // compute velocity at the wake nodes
+    vector<vector3d> wake_velocity(wake->n_nodes());
+
+    for(size_t wn = 0; wn < wake->n_nodes(); wn++){
+        wake_velocity[wn] = compute_total_velocity(wake->nodes[wn]);
+    }
+    log->write_surface_data("solver-out-wake",wake,wake_velocity,"V",false);
+
+}
 
 
+vector3d Solver :: compute_total_velocity(const vector3d& x) const {
 
+    assert(source_strength.size()  > 0);
+    assert(doublet_strength.size() > 0);
 
+    vector3d velocity(0,0,0);
+
+    // compute velocity due to surface panels
+    for(int sp = 0; sp < surface->n_panels(); sp++){
+        velocity += surface->compute_source_panel_unit_velocity(sp,x)  * source_strength[sp];
+        velocity += surface->compute_doublet_panel_unit_velocity(sp,x) * doublet_strength[sp];
+    }
+
+    // compute velocity due to shedded wake panels
+    for(int wp = 0; wp < wake_doublet_strength.size(); wp++){
+        // negative sign because panel normal is in opposite direction
+        velocity -= wake->compute_doublet_panel_unit_velocity(wp,x) * wake_doublet_strength[wp];
+    }
+
+    // add free stream velocity
+
+    velocity += free_stream_velocity;
+
+    return velocity;
+}
 
 
 

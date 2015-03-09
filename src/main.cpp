@@ -18,7 +18,7 @@ int main(int argc, char** args)
 
     PLOT3D mesh;
 
-    string filename = "apame.x";
+    string filename = "NACA0012_2.x";
 
     vector3d free_stream_velocity(1.0,0,0);
     double time_step = 1.0;
@@ -27,6 +27,8 @@ int main(int argc, char** args)
     mesh.set_surface(surface);
     mesh.read_surface(filename);
     mesh.build_topology();
+
+    surface->rotate_surface(vector3d(0,-10,0),false);
 
     surface->compute_panel_components();
 
@@ -44,6 +46,7 @@ int main(int argc, char** args)
     solver.set_reference_velocity(free_stream_velocity);
     solver.set_fluid_density(fluid_density);
     solver.solve(time_step);
+    solver.convect_wake(time_step);
 
 
 //    shared_ptr<Domain> domain(new Domain());

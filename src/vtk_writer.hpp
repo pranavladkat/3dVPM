@@ -31,6 +31,9 @@ public:
 
         std::ofstream ofile(filename + file_extension, std::ios::app);
 
+        if(data.size() == surface->n_nodes())
+            ofile << "POINT_DATA " << surface->nodes.size() << std::endl;
+
         switch (sizeof(T)) {
         case 4:
             ofile << "SCALARS " << name << " double 1" << std::endl;

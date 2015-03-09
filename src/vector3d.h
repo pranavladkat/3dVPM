@@ -140,6 +140,18 @@ public:
         return _data;
     }
 
+    void operator += (const vector3d& vec) {
+        _data[0] += vec[0];
+        _data[1] += vec[1];
+        _data[2] += vec[2];
+    }
+
+    void operator -= (const vector3d& vec) {
+        _data[0] -= vec[0];
+        _data[1] -= vec[1];
+        _data[2] -= vec[2];
+    }
+
 };
 
 

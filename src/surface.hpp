@@ -38,6 +38,8 @@ public:
 
     int n_panels() const;
 
+    int n_nodes() const;
+
     void compute_panel_components();
 
     vector3d& get_collocation_point(int panel,bool below_surface);
