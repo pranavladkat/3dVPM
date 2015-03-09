@@ -28,13 +28,15 @@ int main(int argc, char** args)
     mesh.read_surface(filename);
     mesh.build_topology();
 
-    surface->rotate_surface(vector3d(0,-10,0),false);
-
     surface->compute_panel_components();
 
     shared_ptr<Wake> wake(new Wake());
     wake->add_lifting_surface(surface);
     wake->initialize(free_stream_velocity,time_step);
+
+    shared_ptr<Domain> domain(new Domain());
+    mesh.set_domain(domain);
+    mesh.read_domain("NACA0012_2_domain.x");
 
     shared_ptr<vtk_writer> writer(new vtk_writer());
 
@@ -46,12 +48,18 @@ int main(int argc, char** args)
     solver.set_reference_velocity(free_stream_velocity);
     solver.set_fluid_density(fluid_density);
     solver.solve(time_step);
-    solver.convect_wake(time_step);
+//    solver.convect_wake(time_step);
 
+    solver.compute_domain_velocity(domain);
 
-//    shared_ptr<Domain> domain(new Domain());
-//    mesh.set_domain(domain);
-//    mesh.read_domain("box.x");
+//    vector<vector3d> domain_velocity(domain->n_nodes());
+
+//    for(int i = 0; i < domain->n_nodes(); i++){
+//        domain_velocity[i] = surface->compute_source_panel_unit_velocity(0,domain->nodes[i]);
+//    }
+
+//    writer->write_domain_data("domain-test",domain,domain_velocity,"V",true);
+//    writer->write_surface_mesh("surface-test",surface);
 
     cout << "Hello World!" << endl;
     return 0;

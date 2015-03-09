@@ -97,6 +97,8 @@ public:
 
     void convect_wake(const double& dt);
 
+    void compute_domain_velocity(const std::shared_ptr<Domain> domain);
+
 };
 
 

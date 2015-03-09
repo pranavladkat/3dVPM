@@ -480,16 +480,14 @@ double Surface :: get_panel_area(const int& panel) const{
 
 vector3d Surface :: compute_source_panel_unit_velocity(const int& panel, const vector3d& node) const{
 
+    vector3d panel_velocity(0,0,0);
     // transform node in panel coordinates
     vector3d transformed_node = transform_point_panel(panel,node);
 
-    // if z -> +-0 then velocity = (0,0,+- source_strength/2)
-    if(transformed_node[2] > 0 && transformed_node[2] < Parameters::inversion_tolerance)
-        return vector3d(0,0,0.5);
-    else if(transformed_node[2] < 0 && transformed_node[2] > - Parameters::inversion_tolerance)
-        return vector3d(0,0,-0.5);
+    // if z -> +-0 then velocity = (0,0,0) if x lies outside of panel
+    if(fabs(transformed_node[2]) < Parameters::inversion_tolerance)
+        return panel_velocity;
 
-    vector3d panel_velocity(0,0,0);
     double distance = transformed_node.norm();
 
     // farfield formulation
