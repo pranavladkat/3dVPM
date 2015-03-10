@@ -46,9 +46,9 @@ public:
 
     vector3d get_collocation_point(int panel,bool below_surface) const;
 
-    void translate_surface(const vector3d&);
+    void translate_surface(const vector3d& dX);
 
-    void rotate_surface(vector3d, bool);
+    void rotate_surface(vector3d dTheta, bool isRadian);
 
     void set_linear_velocity(const vector3d&);
 

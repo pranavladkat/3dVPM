@@ -18,7 +18,7 @@ int main(int argc, char** args)
 
     PLOT3D mesh;
 
-    string filename = "NACA0012_2.x";
+    string filename = "NACA0012_alpha10.x";
 
     vector3d free_stream_velocity(1.0,0,0);
     double time_step = 0.25;
@@ -28,6 +28,8 @@ int main(int argc, char** args)
     mesh.read_surface(filename);
     mesh.build_topology();
 
+//    surface->rotate_surface(vector3d(0,-10,0),false);
+
     surface->compute_panel_components();
 
     shared_ptr<Wake> wake(new Wake());
@@ -36,7 +38,7 @@ int main(int argc, char** args)
 
 //    shared_ptr<Domain> domain(new Domain());
 //    mesh.set_domain(domain);
-//    mesh.read_domain("NACA0012_2_domain.x");
+//    mesh.read_domain("NACA0012_downstream_domain.x");
 
     shared_ptr<vtk_writer> writer(new vtk_writer());
 
@@ -51,6 +53,10 @@ int main(int argc, char** args)
     solver.set_fluid_density(fluid_density);
     solver.solve(time_step);
     solver.convect_wake(time_step);
+
+
+    //solver.compute_domain_velocity(domain);
+
 
     cout << "Hello World!" << endl;
     return 0;

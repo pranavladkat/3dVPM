@@ -413,7 +413,8 @@ vector3d Solver :: compute_total_velocity(const vector3d& x) const {
 
     // compute velocity due to shedded wake panels
     for(int wp = 0; wp < (int)wake_doublet_strength.size(); wp++)
-        velocity += wake->compute_doublet_panel_unit_velocity(wp,x) * wake_doublet_strength[wp];
+        // need to varify the sign
+        velocity -= wake->compute_doublet_panel_unit_velocity(wp,x) * wake_doublet_strength[wp];
 
     // add free stream velocity
     velocity += free_stream_velocity;
@@ -444,7 +445,7 @@ void Solver :: convect_wake(const double& dt){
 
     wake->shed_wake(free_stream_velocity,dt);
 
-    //log->write_surface_mesh("solver-out-wake",wake);
+    log->write_surface_mesh("solver-out-wake",wake);
 
 }
 
@@ -458,7 +459,7 @@ void Solver :: compute_domain_velocity(const std::shared_ptr<Domain> domain){
     for(int n = 0; n < domain->n_nodes(); n++)
         domain_velocity[n] = compute_total_velocity(domain->nodes[n]);
 
-    //log->write_domain_data("solver-out-domain",domain,domain_velocity,"V",true);
+    log->write_domain_data("solver-out-domain",domain,domain_velocity,"V",true);
 }
 
 

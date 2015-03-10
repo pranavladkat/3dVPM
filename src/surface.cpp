@@ -585,7 +585,7 @@ vector3d Surface :: compute_doublet_panel_unit_velocity(const int& panel, const 
         const vector3d& node_b = nodes[panels[panel][n]];
 
         // send nodes in global coordinates (not in panel local coordinates)
-        panel_velocity = panel_velocity - compute_doublet_panel_edge_unit_velocity(node_a, node_b, node);
+        panel_velocity -= compute_doublet_panel_edge_unit_velocity(node_a, node_b, node);
     }
 
     return panel_velocity;
