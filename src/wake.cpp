@@ -69,25 +69,25 @@ void Wake :: build_topology(){
 
     int total_new_panels =  (total_nodes / spanwise_nodes - 1) * spanwise_panels - total_panels;
 
-    int it = 0;
-    if(total_panels > 0)
-        it++;
-
     for(int p = 0; p < total_new_panels; p++){
-
-//        if(it == spanwise_panels)
-//            it++;
 
         vector<int> new_panel;
         new_panel.clear();
-        // panel order same as that of surface (anti-clockwise)
-        new_panel.push_back((total_panels + spanwise_nodes) + it);
-        new_panel.push_back((total_panels) + it);
-        new_panel.push_back((total_panels + 1) + it);
-        new_panel.push_back((total_panels + 1 + spanwise_nodes) + it);
 
+        // compute node numbers of the panels
+        int node_a = spanwise_nodes +  n_panels() + n_panels()/spanwise_panels;
+        int node_b = n_panels() + n_panels()/spanwise_panels;
+        int node_c = node_b + 1;
+        int node_d = node_a + 1;
+
+        // add nodes in counter-clockwise
+        new_panel.push_back(node_a);
+        new_panel.push_back(node_b);
+        new_panel.push_back(node_c);
+        new_panel.push_back(node_d);
+
+        // push back new panel
         panels.push_back(new_panel);
-        it++;
     }
 
 }
