@@ -628,6 +628,3 @@ vector3d Surface :: compute_doublet_panel_edge_unit_velocity(const vector3d& nod
 
 
 
-
-
-

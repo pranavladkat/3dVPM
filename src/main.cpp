@@ -40,6 +40,8 @@ int main(int argc, char** args)
 
     shared_ptr<vtk_writer> writer(new vtk_writer());
 
+    writer->write_surface_mesh("wake-initialized",wake);
+
     Solver solver(argc,args);
     solver.add_surface(surface);
     solver.add_wake(wake);

@@ -17,11 +17,11 @@ public:
 
     void add_lifting_surface(const std::shared_ptr<Surface> surf);
 
-    void initialize(const vector3d& free_stream_velocity, double dt);
+    void initialize(const vector3d& free_stream_velocity, const double& dt);
 
     void build_topology();
 
-    void shed_wake();
+    void shed_wake(const vector3d& free_stream_velocity, double dt);
 
 };
 

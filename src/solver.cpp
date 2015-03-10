@@ -409,8 +409,6 @@ void Solver :: convect_wake(const double& dt){
     int nodes_to_convect = wake->n_nodes() - surface->n_trailing_edge_nodes();
     assert(nodes_to_convect > 0);
 
-    cout << nodes_to_convect << endl;
-
     // compute velocity at the wake nodes which needs to be convected
     vector<vector3d> wake_velocity(nodes_to_convect);
 
@@ -422,7 +420,9 @@ void Solver :: convect_wake(const double& dt){
     for(int wn = 0; wn < nodes_to_convect; wn++)
         wake->nodes[wn] += wake_velocity[wn] * dt ;
 
-    //log->write_surface_mesh("solver-out-wake",wake);
+    wake->shed_wake(free_stream_velocity,dt);
+
+    log->write_surface_mesh("solver-out-wake",wake);
 
 }
 

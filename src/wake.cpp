@@ -16,7 +16,7 @@ void Wake :: add_lifting_surface(const std::shared_ptr<Surface> surf) {
     lifting_surface = surf;
 }
 
-void Wake :: initialize(const vector3d& free_stream_velocity, double dt){
+void Wake :: initialize(const vector3d& free_stream_velocity, const double &dt){
 
     assert(lifting_surface != NULL);
     assert(lifting_surface->n_trailing_edge_nodes() > 0);
@@ -55,7 +55,6 @@ void Wake :: initialize(const vector3d& free_stream_velocity, double dt){
     build_topology();
     // compute panel components
     compute_panel_components();
-
 }
 
 // builds panel neighbors
@@ -76,8 +75,8 @@ void Wake :: build_topology(){
 
     for(int p = 0; p < total_new_panels; p++){
 
-        if(it == spanwise_panels)
-            it++;
+//        if(it == spanwise_panels)
+//            it++;
 
         vector<int> new_panel;
         new_panel.clear();
@@ -87,12 +86,6 @@ void Wake :: build_topology(){
         new_panel.push_back((total_panels + 1) + it);
         new_panel.push_back((total_panels + 1 + spanwise_nodes) + it);
 
-        // panel order opposite to that of surface (clockwise) -> does not work, it will result all vectors in opposite direction
-        //new_panel.push_back((total_panels) + it);
-        //new_panel.push_back((total_panels + spanwise_nodes) + it);
-        //new_panel.push_back((total_panels + 1 + spanwise_nodes) + it);
-        //new_panel.push_back((total_panels + 1) + it);
-
         panels.push_back(new_panel);
         it++;
     }
@@ -100,6 +93,36 @@ void Wake :: build_topology(){
 }
 
 
-void Wake :: shed_wake(){
+void Wake :: shed_wake(const vector3d &free_stream_velocity, double dt){
 
+    assert(nodes.size() > 0);
+
+    // move nodes on trailing edge with local velocity
+    for(int n = nodes.size() - lifting_surface->n_trailing_edge_nodes(); n < (int)nodes.size(); n++ ){
+
+        // get node on trailing edge
+        vector3d& node = nodes[n];
+
+        // local wake velocity at trailing edge
+        vector3d vel = - lifting_surface->get_kinematic_velocity(node) + free_stream_velocity;
+
+        // compute distance
+        vector3d distance(0,0,0);
+        if(Parameters::static_wake)
+            distance = lifting_surface->get_trailing_edge_bisector(n) * Parameters::static_wake_length;
+        else
+            distance = vel * dt * Parameters::trailing_edge_wake_shed_factor;
+
+        //update node coordinates
+        node += distance;
+    }
+
+    // add row of nodes which matches trailing edge
+    for(int i = 0; i < lifting_surface->n_trailing_edge_nodes(); i++){
+        const vector3d& TE_node = lifting_surface->nodes[lifting_surface->trailing_edge_nodes[i]];
+        nodes.push_back(TE_node);
+    }
+
+    build_topology();
+    compute_panel_components();
 }
