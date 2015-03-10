@@ -48,21 +48,23 @@ void Solver :: set_fluid_density(const double value){
 
 void Solver :: solve(const double dt, int iteration){
 
-    source_strength.clear();
-    source_strength.resize(surface->n_panels());
-
     // compute source strength
+    if(iteration == 0){
+        source_strength.clear();
+        source_strength.resize(surface->n_panels());
+    }
     for(int p = 0; p < surface->n_panels(); p++){
         source_strength[p] = compute_source_strength(p);
         //cout << std::scientific << source_strength[p] << endl;
     }
 
-    // compute source and doublet coefficients and populate matrices
-    source_influence.clear();
-    source_influence.resize(surface->n_panels(),vector<double>(surface->n_panels()));
-    doublet_influence.clear();
-    doublet_influence.resize(surface->n_panels(),vector<double>(surface->n_panels()));
-
+    // compute source and doublet coefficients and build Influence matrix
+    if(iteration == 0){
+        source_influence.clear();
+        source_influence.resize(surface->n_panels(),vector<double>(surface->n_panels()));
+        doublet_influence.clear();
+        doublet_influence.resize(surface->n_panels(),vector<double>(surface->n_panels()));
+    }
     for(int n = 0; n < surface->n_panels(); n++){
         for(int p = 0; p < surface->n_panels(); p++){
 
@@ -107,39 +109,49 @@ void Solver :: solve(const double dt, int iteration){
     solve_linear_system();
 
     // compute surface velocity
-    surface_velocity.clear();
-    surface_velocity.resize(surface->n_panels());
+    if(iteration == 0){
+        surface_velocity.clear();
+        surface_velocity.resize(surface->n_panels());
+    }
     for(int p = 0; p < surface->n_panels(); p++){
         surface_velocity[p] = compute_surface_velocity(p) ;
     }
 
+    // compute surface potential
+    if(iteration == 0){
+        surface_potential.clear();
+        surface_potential.resize(surface->n_panels());
+    }else
+        surface_potential_old = surface_potential;
+    for(int p = 0; p < surface->n_panels(); p++)
+        surface_potential[p] = compute_surface_potential(p);
+
+
     // compute coefficient of pressure
-    pressure_coefficient.clear();
-    pressure_coefficient.resize(surface->n_panels());
-    surface_potential.clear();
-    surface_potential.resize(surface->n_panels());
+    if(iteration == 0){
+        pressure_coefficient.clear();
+        pressure_coefficient.resize(surface->n_panels());
+    }
     for(int p = 0; p < surface->n_panels(); p++){
         pressure_coefficient[p] = compute_pressure_coefficient(p,iteration,dt) ;
         //cout << pressure_coefficient[p] << endl;
     }
 
 
-    // compute wake strength only if problem is unsteady
+    // compute wake strength, only if problem is unsteady
     if(Parameters::unsteady_problem){
 
         // push back wake strength for the current time step
         for(int TE_panel = 0; TE_panel < surface->n_trailing_edge_panels(); TE_panel++){
 
-            int upper_panel = surface->upper_TE_panels[TE_panel];
-            int lower_panel = surface->lower_TE_panels[TE_panel];
-
             assert(doublet_strength.size() > 0);
 
+            int upper_panel = surface->upper_TE_panels[TE_panel];
+            int lower_panel = surface->lower_TE_panels[TE_panel];
             double wake_strenth = doublet_strength[upper_panel] - doublet_strength[lower_panel];
             wake_doublet_strength.push_back(wake_strenth);
         }
     }
-
 
     //compute body forces
     body_forces =  compute_body_forces();
@@ -306,6 +318,9 @@ vector3d Solver :: compute_surface_velocity(const int panel) const {
     /* Solve the equations A*X = B */
     dgelsd_( &m, &n, &nrhs, mat, &lda, rhs, &ldb, s, &rcond, &rank, work, &lwork, iwork, &info );
 
+    // check if solution returned success
+    assert(info == 0);
+
     // notice negative sign on rhs terms
     // also notice third component is kept zero
     vector3d total_velocity = vector3d(-rhs[0],-rhs[1],0) - vector3d(local_velocity_transformed[0],local_velocity_transformed[1],0);
@@ -316,14 +331,7 @@ vector3d Solver :: compute_surface_velocity(const int panel) const {
 
 
 
-double Solver :: compute_pressure_coefficient(const int& panel, const int& iteration, const double &dt) {
-
-    // phi = - doublet_strength
-    surface_potential[panel] = - doublet_strength[panel];
-
-    // add contribution from free stream velocity and body velocity (phi_infinity = U*x+V*y+W*z)
-    vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel,false)) - free_stream_velocity;
-    surface_potential[panel] -= local_velocity.dot(surface->get_collocation_point(panel,false));
+double Solver :: compute_pressure_coefficient(const int& panel, const int& iteration, const double &dt) const {
 
     //compute dphidt
     double dphidt = 0;
@@ -338,6 +346,21 @@ double Solver :: compute_pressure_coefficient(const int& panel, const int& itera
     double Cp = 1.0 - (surface_velocity[panel].squared_norm() + 2.0 * dphidt) / reference_velocity.squared_norm();
 
     return Cp;
+}
+
+
+double Solver :: compute_surface_potential(const int& panel) const {
+
+    double potential;
+
+    // phi = - doublet_strength
+    potential = - doublet_strength[panel];
+
+    // add contribution from free stream velocity and body velocity (phi_infinity = U*x+V*y+W*z)
+    vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel,false)) - free_stream_velocity;
+    potential -= local_velocity.dot(surface->get_collocation_point(panel,false));
+
+    return potential;
 }
 
 
@@ -415,23 +438,15 @@ void Solver :: convect_wake(const double& dt){
     for(int wn = 0; wn < nodes_to_convect; wn++)
         wake_velocity[wn] = compute_total_velocity(wake->nodes[wn]);
 
-
     // move the nodes with wake velocity
     for(int wn = 0; wn < nodes_to_convect; wn++)
         wake->nodes[wn] += wake_velocity[wn] * dt ;
 
     wake->shed_wake(free_stream_velocity,dt);
 
-    log->write_surface_mesh("solver-out-wake",wake);
+    //log->write_surface_mesh("solver-out-wake",wake);
 
 }
-
-
-
-
-
-
-
 
 
 
@@ -454,6 +469,7 @@ void Solver :: compute_domain_velocity(const std::shared_ptr<Domain> domain){
 
 // global functions
 
+// create petsc vec
 void petsc_vec_create(Vec& vec, int size){
 
     VecCreate(PETSC_COMM_WORLD,&vec);
@@ -462,7 +478,7 @@ void petsc_vec_create(Vec& vec, int size){
     VecSet(vec,0.0);
 }
 
-
+// create petsc mat
 void petsc_mat_create(Mat& mat, const int rows, const int cols){
 
     MatCreateSeqDense(PETSC_COMM_WORLD,rows,cols,NULL,&mat);
@@ -471,6 +487,7 @@ void petsc_mat_create(Mat& mat, const int rows, const int cols){
     MatZeroEntries(mat);
 }
 
+// write petsc mat to a file readable by MATLAB
 void WriteMat(Mat& mat,char const *name){
 
     PetscViewer viewer;

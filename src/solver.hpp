@@ -61,7 +61,9 @@ private:
 
     std::vector<double> surface_potential_old;
 
-    double compute_pressure_coefficient(const int& panel, const int& iteration, const double& dt);
+    double compute_pressure_coefficient(const int& panel, const int& iteration, const double& dt) const;
+
+    double compute_surface_potential(const int& panel) const;
 
     vector3d body_forces, body_force_coefficients;
 
