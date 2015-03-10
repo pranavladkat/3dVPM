@@ -375,22 +375,6 @@ vector3d Solver :: compute_body_force_coefficients() const {
 }
 
 
-void Solver :: convect_wake(const double& dt){
-
-    assert(Parameters::static_wake == false);
-    assert(wake->n_panels() > 0);
-
-    // compute velocity at the wake nodes
-    vector<vector3d> wake_velocity(wake->n_nodes());
-
-    for(int wn = 0; wn < wake->n_nodes(); wn++){
-        wake_velocity[wn] = compute_total_velocity(wake->nodes[wn]);
-    }
-    log->write_surface_data("solver-out-wake",wake,wake_velocity,"V",false);
-
-}
-
-
 vector3d Solver :: compute_total_velocity(const vector3d& x) const {
 
     assert(source_strength.size()  > 0);
@@ -413,6 +397,41 @@ vector3d Solver :: compute_total_velocity(const vector3d& x) const {
 
     return velocity;
 }
+
+
+
+void Solver :: convect_wake(const double& dt){
+
+    assert(Parameters::static_wake == false);
+    assert(wake->n_panels() > 0);
+
+    // nodes_to_convect does not include nodes on trailing edge.
+    int nodes_to_convect = wake->n_nodes() - surface->n_trailing_edge_nodes();
+    assert(nodes_to_convect > 0);
+
+    cout << nodes_to_convect << endl;
+
+    // compute velocity at the wake nodes which needs to be convected
+    vector<vector3d> wake_velocity(nodes_to_convect);
+
+    for(int wn = 0; wn < nodes_to_convect; wn++)
+        wake_velocity[wn] = compute_total_velocity(wake->nodes[wn]);
+
+
+    // move the nodes with wake velocity
+    for(int wn = 0; wn < nodes_to_convect; wn++)
+        wake->nodes[wn] += wake_velocity[wn] * dt ;
+
+    //log->write_surface_mesh("solver-out-wake",wake);
+
+}
+
+
+
+
+
+
+
 
 
 
