@@ -79,6 +79,10 @@ private:
 
     vector3d compute_total_velocity(const vector3d& x) const;
 
+    std::vector<std::vector<double>> wake_doublet_influence;
+
+    void write_output(const int& interation) const ;
+
 public:
     Solver(int argC,char** argS);
     ~Solver();

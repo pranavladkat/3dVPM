@@ -48,7 +48,9 @@ void Solver :: set_fluid_density(const double value){
 
 void Solver :: solve(const double dt, int iteration){
 
+    cout << "ITERATION : " << iteration + 1 << endl;
     // compute source strength
+    cout << "Computing Source Strengths..." ;
     if(iteration == 0){
         source_strength.clear();
         source_strength.resize(surface->n_panels());
@@ -57,8 +59,10 @@ void Solver :: solve(const double dt, int iteration){
         source_strength[p] = compute_source_strength(p);
         //cout << std::scientific << source_strength[p] << endl;
     }
+    cout << "Done." << endl;
 
     // compute source and doublet coefficients and build Influence matrix
+    cout << "Computing Influence Coefficient Matrix...";
     if(iteration == 0){
         source_influence.clear();
         source_influence.resize(surface->n_panels(),vector<double>(surface->n_panels()));
@@ -77,8 +81,26 @@ void Solver :: solve(const double dt, int iteration){
             //cout << std::scientific << influence.first << "\t" << influence.second << endl;
         }
     }
+    cout << "Done." << endl;
+
+
+    // compute influence coeficient of the wake doublet
+    if(wake_doublet_strength.size() > 0){
+
+        cout << "Computing Wake Influence coefficients...";
+
+        wake_doublet_influence.clear();
+        wake_doublet_influence.resize(surface->n_panels(),vector<double>(wake_doublet_strength.size()));
+        for(int n = 0; n < surface->n_panels(); n++){
+            for(int p = 0; p < (int)wake_doublet_strength.size(); p++)
+                wake_doublet_influence[n][p] = - wake->compute_doublet_panel_influence(p,surface->get_collocation_point(n,true));
+        }
+
+        cout << "Done." << endl;
+    }
 
     // apply Kutta-condition
+    cout << "Applying Kutta-Condition...";
     int TE_panel_counter = 0;
     for(int wp = 0; wp < wake->n_panels(); wp++){
 
@@ -94,9 +116,12 @@ void Solver :: solve(const double dt, int iteration){
 
             doublet_influence[sp][upper_panel] += influence;
             doublet_influence[sp][lower_panel] -= influence;
+            //cout << influence << endl;
         }
         TE_panel_counter++;
     }
+    cout << "Done." << endl;
+
 
     // initialize petsc variables
     if(iteration == 0)
@@ -123,8 +148,10 @@ void Solver :: solve(const double dt, int iteration){
         surface_potential.resize(surface->n_panels());
     }else
         surface_potential_old = surface_potential;
-    for(int p = 0; p < surface->n_panels(); p++)
+    for(int p = 0; p < surface->n_panels(); p++){
         surface_potential[p] = compute_surface_potential(p);
+        //cout << surface_potential[p] << endl;
+    }
 
 
     // compute coefficient of pressure
@@ -159,11 +186,8 @@ void Solver :: solve(const double dt, int iteration){
     //compute body force coefficients
     body_force_coefficients = compute_body_force_coefficients();
 
-    log->write_surface_data("solver-out-surface",surface,surface_velocity,"V",true);
-    log->write_surface_data("solver-out-surface",surface,pressure_coefficient,"CP",false);
-    log->write_surface_data("solver-out-surface",surface,doublet_strength,"Mu",false);
-    log->write_surface_data("solver-out-surface",surface,source_strength,"Sigma",false);
-    log->write_surface_mesh("solver-out-wake",wake);
+    // write iteration output
+    write_output(iteration);
 
 }
 
@@ -220,11 +244,22 @@ void Solver :: setup_linear_system(){
     double *_RHS;
     VecGetArray(RHS,&_RHS);
 
+    // RHS = source_coefficient * source_strength
     for(int i = 0; i < surface->n_panels(); i++){
         for(int j = 0; j < surface->n_panels(); j++)
             _RHS[i] += source_influence[i][j] * source_strength[j];
         //cout << _RHS[i] << endl;
     }
+
+    // RHS += wake_doublet_coefficient * wake_doublet_strength
+    if(wake_doublet_strength.size() > 0){
+
+        for(int i = 0; i < surface->n_panels(); i++){
+            for(int j = 0; j < wake_doublet_strength.size(); j++)
+                _RHS[i] += wake_doublet_influence[i][j] * wake_doublet_strength[j] ;
+        }
+    }
+
     VecRestoreArray(RHS,&_RHS);
 }
 
@@ -462,6 +497,37 @@ void Solver :: compute_domain_velocity(const std::shared_ptr<Domain> domain){
     log->write_domain_data("solver-out-domain",domain,domain_velocity,"V",true);
 }
 
+
+
+
+void Solver :: write_output(const int& iteration) const {
+
+    // folder name
+    const string foldername = "Output";
+
+    // create directory if does not exist
+    struct stat dir_err;
+    if(stat(foldername.c_str(),&dir_err) == -1)
+        mkdir(foldername.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+    // set surface and wake names
+    string surface_name = foldername + "/" + "surface_" + to_string(iteration);
+    string wake_name = foldername + "/" + "wake_" + to_string(iteration);
+
+    // write data
+    cout << "writing output...";
+
+    log->write_surface_data(surface_name,surface,surface_velocity,"V",true);
+    log->write_surface_data(surface_name,surface,pressure_coefficient,"CP",false);
+    log->write_surface_data(surface_name,surface,doublet_strength,"Mu",false);
+    log->write_surface_data(surface_name,surface,source_strength,"Sigma",false);
+    log->write_surface_mesh(wake_name,wake);
+    if(wake_doublet_strength.size() > 0)
+        log->write_surface_data(wake_name,wake,wake_doublet_strength,"Mu",false);
+
+    cout << "Done." << endl;
+
+}
 
 
 

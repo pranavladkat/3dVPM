@@ -11,24 +11,29 @@ using namespace std;
 int main(int argc, char** args)
 {
 
-    Parameters::unsteady_problem = true;
-    Parameters::static_wake = false;
+    Parameters::unsteady_problem = false;
+    Parameters::static_wake = true;
+    Parameters::static_wake_length = 1;
 
     shared_ptr<Surface> surface(new Surface);
 
     PLOT3D mesh;
 
-    string filename = "NACA0012_alpha10.x";
+    string filename = "NACA0012_1.x";
 
-    vector3d free_stream_velocity(1.0,0,0);
-    double time_step = 0.25;
+    double speed = 1.0;
+    double angle = 10 * M_PI/180.0;
+    vector3d free_stream_velocity(speed*cos(angle),0,speed*sin(angle));
+    //vector3d free_stream_velocity(1,0,0);
+
+    double time_step = 1;
     double fluid_density = 1.225;
 
     mesh.set_surface(surface);
     mesh.read_surface(filename);
     mesh.build_topology();
 
-//    surface->rotate_surface(vector3d(0,-10,0),false);
+    //surface->rotate_surface(vector3d(0,-5,0),false);
 
     surface->compute_panel_components();
 
@@ -42,8 +47,6 @@ int main(int argc, char** args)
 
     shared_ptr<vtk_writer> writer(new vtk_writer());
 
-    writer->write_surface_mesh("wake-initialized",wake);
-
     Solver solver(argc,args);
     solver.add_surface(surface);
     solver.add_wake(wake);
@@ -51,8 +54,9 @@ int main(int argc, char** args)
     solver.set_free_stream_velocity(free_stream_velocity);
     solver.set_reference_velocity(free_stream_velocity);
     solver.set_fluid_density(fluid_density);
+
     solver.solve(time_step);
-    solver.convect_wake(time_step);
+    //solver.convect_wake(time_step);
 
 
     //solver.compute_domain_velocity(domain);

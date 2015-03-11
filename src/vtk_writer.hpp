@@ -7,6 +7,7 @@
 #include <memory>
 #include <cassert>
 #include <fstream>
+#include <sys/stat.h>
 
 #include "surface.hpp"
 #include "domain.hpp"
