@@ -105,6 +105,8 @@ public:
 
     void compute_domain_velocity(const std::shared_ptr<Domain> domain);
 
+    void finalize_iteration();
+
 };
 
 

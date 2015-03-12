@@ -12,8 +12,6 @@ int main(int argc, char** args)
 {
 
     Parameters::unsteady_problem = true;
-    Parameters::static_wake = false;
-    Parameters::use_vortex_core_model = false;
 
     shared_ptr<Surface> surface(new Surface);
 
@@ -55,9 +53,10 @@ int main(int argc, char** args)
     solver.set_reference_velocity(free_stream_velocity);
     solver.set_fluid_density(fluid_density);
 
-    for(int i = 0; i < 100; i++){
+    for(int i = 0; i < 50; i++){
         solver.solve(time_step,i);
         solver.convect_wake(time_step);
+        solver.finalize_iteration();
     }
 
     cout << "Hello World!" << endl;

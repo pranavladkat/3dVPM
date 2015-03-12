@@ -131,6 +131,7 @@ void Solver :: solve(const double dt, int iteration){
         initialize_petsc_variables();
 
     // setup A and B of the AX = B
+    cout << "Solving for unknown doublet strengths..." << endl;
     setup_linear_system();
 
     // solve linear system & set unknown doublet strengths
@@ -168,21 +169,29 @@ void Solver :: solve(const double dt, int iteration){
 //    }
 
 
-    // compute wake strength, only if problem is unsteady
+    // compute wake strength
     if(Parameters::unsteady_problem){
-
-        // push back wake strength for the current time step
-        for(int TE_panel = 0; TE_panel < surface->n_trailing_edge_panels(); TE_panel++){
-
-            assert(doublet_strength.size() > 0);
-
-            int upper_panel = surface->upper_TE_panels[TE_panel];
-            int lower_panel = surface->lower_TE_panels[TE_panel];
-            double wake_strenth = doublet_strength[upper_panel] - doublet_strength[lower_panel];
-            wake_doublet_strength.push_back(wake_strenth);
-        }
+        wake_panel_start = wake->n_panels() - surface->n_trailing_edge_panels();
+        wake_panel_end = wake->n_panels();
+    }else{
+        wake_panel_start = 0;
+        wake_panel_end = wake->n_panels();
     }
+    TE_panel_counter = 0;
+    for(int wp = wake_panel_start; wp < wake_panel_end; wp++){
 
+        assert(doublet_strength.size() > 0);
+
+        if(TE_panel_counter == surface->n_trailing_edge_panels())
+            TE_panel_counter = 0;
+        int upper_panel = surface->upper_TE_panels[TE_panel_counter];
+        int lower_panel = surface->lower_TE_panels[TE_panel_counter];
+
+        double wake_strenth = doublet_strength[upper_panel] - doublet_strength[lower_panel];
+        wake_doublet_strength.push_back(wake_strenth);
+
+        TE_panel_counter++;
+    }
 
     // write iteration output
     write_output(iteration);
@@ -248,9 +257,8 @@ void Solver :: setup_linear_system(){
         //cout << _RHS[i] << endl;
     }
 
-    // RHS += wake_doublet_coefficient * wake_doublet_strength
+    // RHS -= wake_doublet_coefficient * wake_doublet_strength
     if(wake_doublet_strength.size() > 0){
-
         for(int i = 0; i < surface->n_panels(); i++){
             for(int j = 0; j < (int)wake_doublet_strength.size(); j++)
                 _RHS[i] -= wake_doublet_influence[i][j] * wake_doublet_strength[j] ;
@@ -274,7 +282,7 @@ void Solver :: solve_linear_system(){
     KSPSetUp(ksp_doublet);
     KSPSolve(ksp_doublet,RHS,solution);
     KSPGetIterationNumber(ksp_doublet,&itn);
-    PetscPrintf(PETSC_COMM_WORLD,"Iterations taken for KSP: %d\n",itn+1);
+    PetscPrintf(PETSC_COMM_WORLD,"Solution converged in %d iterations.\n",itn+1);
 
     PetscReal *_SOL;
 
@@ -525,6 +533,35 @@ void Solver :: write_output(const int& iteration) const {
     cout << "Done." << endl;
 
 }
+
+
+
+void Solver :: finalize_iteration(){
+
+    // if problem is steady
+    if(!Parameters::unsteady_problem){
+
+        // clear doublet strength of the wake
+        wake_doublet_strength.clear();
+
+    }
+
+    // if problem is unsteady
+    else if (Parameters::unsteady_problem) {
+
+
+
+    }
+
+}
+
+
+
+
+
+
+
+
 
 
 

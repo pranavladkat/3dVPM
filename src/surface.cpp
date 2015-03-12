@@ -568,16 +568,16 @@ vector3d Surface :: compute_doublet_panel_unit_velocity(const int& panel, const 
     double distance = transformed_node.norm();
 
     // farfield formulation
-    if(distance > panel_farfield_distance[panel]){
+//    if(distance > panel_farfield_distance[panel]){
 
-        panel_velocity[0] = 3 * panel_areas[panel] * transformed_node[0] * transformed_node[2] * fourpi * pow(distance,-5.0);
-        panel_velocity[1] = 3 * panel_areas[panel] * transformed_node[1] * transformed_node[2] * fourpi * pow(distance,-5.0);
-        panel_velocity[2] = - panel_areas[panel] * (pow(transformed_node[0],2.0) + pow(transformed_node[1],2.0)
-                          - 2 * pow(transformed_node[2],2.0)) * fourpi * pow(distance,-5.0);
-        // transform to global coordinates
-        panel_velocity = transform_vector_panel_inverse(panel,panel_velocity);
-        return panel_velocity;
-    }
+//        panel_velocity[0] = 3 * panel_areas[panel] * transformed_node[0] * transformed_node[2] * fourpi * pow(distance,-5.0);
+//        panel_velocity[1] = 3 * panel_areas[panel] * transformed_node[1] * transformed_node[2] * fourpi * pow(distance,-5.0);
+//        panel_velocity[2] = - panel_areas[panel] * (pow(transformed_node[0],2.0) + pow(transformed_node[1],2.0)
+//                          - 2 * pow(transformed_node[2],2.0)) * fourpi * pow(distance,-5.0);
+//        // transform to global coordinates
+//        panel_velocity = transform_vector_panel_inverse(panel,panel_velocity);
+//        return panel_velocity;
+//    }
 
     // calculate velocity due to panel edges using Vortex Line formulation
     // node does not need to be transformed to panel local coordinates
