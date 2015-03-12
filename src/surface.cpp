@@ -174,7 +174,14 @@ vector3d Surface :: transform_point_panel(int panel, const vector3d& x) const{
 void Surface :: translate_surface(const vector3d& dX){
 
     for(size_t n = 0; n < nodes.size(); n++)
-        nodes[n] = nodes[n] + dX;
+        nodes[n] += dX;
+
+    // update surface origin
+    previous_surface_origin = surface_origin;
+    surface_origin += dX;
+
+    // update panel components
+    compute_panel_components();
 }
 
 
@@ -201,6 +208,13 @@ void Surface :: rotate_surface(vector3d dTheta, bool isRadian){
                     + (cos(dTheta[0])*sin(dTheta[1])*sin(dTheta[2]) - sin(dTheta[0])*cos(dTheta[2]))*old_x[1]
                     + cos(dTheta[0])*cos(dTheta[1])*old_x[2];
     }
+
+    // update surface orientation
+    previous_surface_orientation = surface_orientation;
+    surface_orientation += dTheta;
+
+    // update panel components
+    compute_panel_components();
 }
 
 
@@ -563,9 +577,9 @@ vector3d Surface :: compute_doublet_panel_unit_velocity(const int& panel, const 
     vector3d panel_velocity(0,0,0);
 
     // transform node in panel coordinates
-    vector3d transformed_node = transform_point_panel(panel,node);
+    //vector3d transformed_node = transform_point_panel(panel,node);
 
-    double distance = transformed_node.norm();
+    //double distance = transformed_node.norm();
 
     // farfield formulation
 //    if(distance > panel_farfield_distance[panel]){

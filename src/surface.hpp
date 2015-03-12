@@ -34,8 +34,6 @@ public:
     /** @brief panels connected to lower trailing edge */
     std::vector<int> lower_TE_panels;
 
-    //functions
-
     int n_panels() const;
 
     int n_nodes() const;

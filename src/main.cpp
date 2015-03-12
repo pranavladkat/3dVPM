@@ -13,27 +13,25 @@ int main(int argc, char** args)
 
     Parameters::unsteady_problem = true;
 
+    // create surface object
     shared_ptr<Surface> surface(new Surface);
 
+    // read mesh file
     PLOT3D mesh;
-
     string filename = "NACA0012_1.x";
+    mesh.set_surface(surface);
+    mesh.read_surface(filename);
 
-    double speed = 1.0;
-    double angle = 0 * M_PI/180.0;
-    vector3d free_stream_velocity(speed*cos(angle),0,speed*sin(angle));
-    //vector3d free_stream_velocity(1,0,0);
+    // now free stream vel is zero and surface is moving with (-1,0,0)
+    vector3d free_stream_velocity(0,0,0);
+    vector3d surface_velocity(-1,0,0);
+    surface->set_linear_velocity(surface_velocity);
 
     double time_step = 0.1;
     double fluid_density = 1.225;
 
-    mesh.set_surface(surface);
-    mesh.read_surface(filename);
-    mesh.build_topology();
-
+    // set blade at 10 degrees AOA
     surface->rotate_surface(vector3d(0,-10,0),false);
-
-    surface->compute_panel_components();
 
     shared_ptr<Wake> wake(new Wake());
     wake->add_lifting_surface(surface);
@@ -53,9 +51,11 @@ int main(int argc, char** args)
     solver.set_reference_velocity(free_stream_velocity);
     solver.set_fluid_density(fluid_density);
 
-    for(int i = 0; i < 50; i++){
+    for(int i = 0; i < 100; i++){
         solver.solve(time_step,i);
         solver.convect_wake(time_step);
+        surface->translate_surface(surface_velocity * time_step);
+        wake->shed_wake(free_stream_velocity,time_step);
         solver.finalize_iteration();
     }
 
@@ -66,8 +66,6 @@ int main(int argc, char** args)
 
 
 /* Changes to do in the code:
- * - While applying Kutta-condition, make sure only trailing edge wake panels are considered
- * - Test calc of lower and upper panel during kutta condition for wake panels > spanwise panels
  * - Test add/subtract kinematic vel in panel coordinate in compute_surface_velociy().
  * - How to compute span_area in wind turbine case?
  */

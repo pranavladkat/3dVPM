@@ -101,6 +101,9 @@ void PLOT3D :: read_surface(std::string name){
 //        cout << endl;
 //    }
 
+    // build topology
+    build_topology();
+
 }
 
 

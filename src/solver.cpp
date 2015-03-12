@@ -484,7 +484,7 @@ void Solver :: convect_wake(const double& dt){
             wake->nodes[wn] += wake_velocity[wn] * dt ;
 
         // shed wake (this updates the panel topology as well)
-        wake->shed_wake(free_stream_velocity,dt);
+        //wake->shed_wake(free_stream_velocity,dt);
     }
 
 }

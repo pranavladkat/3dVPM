@@ -6,7 +6,7 @@ double Parameters :: inversion_tolerance = 1e-12;
 
 double Parameters :: farfield_factor = 10.0;
 
-double Parameters :: trailing_edge_wake_shed_factor = 0.3;
+double Parameters :: trailing_edge_wake_shed_factor = 0.2;
 
 bool Parameters :: unsteady_problem = false;
 
