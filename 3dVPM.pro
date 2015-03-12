@@ -13,6 +13,13 @@ unix:QMAKE_RPATHDIR += /usr/local/MATLAB/R2013a/bin/glnxa64
 
 QMAKE_CXX = g++
 QMAKE_CXXFLAGS += -std=c++11
+# remove possible other optimization flags
+QMAKE_CFLAGS_RELEASE -= -O
+QMAKE_CFLAGS_RELEASE -= -O1
+QMAKE_CFLAGS_RELEASE -= -O2
+
+# add the desired -O3 if not present
+QMAKE_CFLAGS_RELEASE += -O3
 
 SOURCES += \
     src/main.cpp \

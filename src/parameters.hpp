@@ -20,6 +20,8 @@ public:
 
     static double static_wake_length;
 
+    static bool use_vortex_core_model;
+
 };
 
 

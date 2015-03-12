@@ -30,6 +30,10 @@ void Surface :: compute_panel_components(){
     assert(nodes.size() > 0 && panels.size() > 0);
 
     //compute panel normal and areas
+    panel_areas.clear();
+    panel_areas.resize(n_panels());
+    panel_normals.clear();
+    panel_normals.resize(n_panels());
     for(int p = 0; p < n_panels(); p++){
 
         vector<int> &panel_nodes = panels[p];
@@ -46,15 +50,12 @@ void Surface :: compute_panel_components(){
         }
 
         // panel area
-        panel_areas.push_back(normal.norm()/2.0);
+        panel_areas[p] = normal.norm() / 2.0;
         //cout << panel_areas[p] << endl;
 
-        if(panel_areas[p] < Parameters::inversion_tolerance){
-            normal = 0.0;
-        }else{
-            normal.normalize();
-        }
-        panel_normals.push_back(normal);
+        normal.normalize();
+
+        panel_normals[p] = normal;
         //cout << normal << endl;
     }
 
@@ -67,33 +68,35 @@ void Surface :: compute_panel_components(){
     panel_collocation_points[1].resize(n_panels());
 
     for(int p = 0; p < n_panels(); p++){
-        vector3d new_cp(0.0,0.0,0.0);
+        vector3d new_cp(0,0,0);
         for(int n = 0; n < (int)panels[p].size(); n++)
-            new_cp = new_cp + nodes[panels[p][n]];
+            new_cp += nodes[panels[p][n]];
 
         new_cp = new_cp / (double)panels[p].size();
         panel_collocation_points[0][p] = new_cp;
         //cout << new_cp << endl;
 
-        new_cp = new_cp - panel_normals[p] * Parameters::collocation_point_delta;
+        new_cp -= panel_normals[p] * Parameters::collocation_point_delta;
         panel_collocation_points[1][p] = new_cp;
         //cout << new_cp << endl;
     }
 
     // compute transformation
+    panel_longitudinals.clear();
+    panel_longitudinals.resize(n_panels());
+    panel_transverse.clear();
+    panel_transverse.resize(n_panels());
     for(int p = 0; p < n_panels(); p++){
 
         vector3d longitudinal = nodes[panels[p][0]] - nodes[panels[p][1]];
-        if(longitudinal.norm() < Parameters::inversion_tolerance){
-            longitudinal = 0.0;
-        }else{
-            longitudinal.normalize();
-        }
-        panel_longitudinals.push_back(longitudinal);
+
+        longitudinal.normalize();
+
+        panel_longitudinals[p] = longitudinal;
         //cout << longitudinal << endl;
 
         vector3d transverse = panel_normals[p].cross(panel_longitudinals[p]);
-        panel_transverse.push_back(transverse);
+        panel_transverse[p] = transverse;
         //cout << transverse << endl;
     }
 
@@ -101,9 +104,12 @@ void Surface :: compute_panel_components(){
     panel_local_coordinates.clear();
     panel_local_coordinates.resize(n_panels());
     for(int p = 0; p < n_panels(); p++){
+
+        panel_local_coordinates[p].clear();
+        panel_local_coordinates[p].resize(panels[p].size());
+
         for(int n = 0; n < (int)panels[p].size(); n++){
-            vector3d transformed_point = transform_point_panel(p,nodes[panels[p][n]]);
-            panel_local_coordinates[p].push_back(transformed_point);
+            panel_local_coordinates[p][n] = transform_point_panel(p,nodes[panels[p][n]]);
             //cout << transformed_point << endl;
         }
         //cout << endl;
@@ -615,7 +621,23 @@ vector3d Surface :: compute_doublet_panel_edge_unit_velocity(const vector3d& nod
         r0r1 = (node_b[0] - node_a[0])*(x[0] - node_a[0]) + (node_b[1] - node_a[1])*(x[1] - node_a[1]) + (node_b[2] - node_a[2])*(x[2] - node_a[2]);
         r0r2 = (node_b[0] - node_a[0])*(x[0] - node_b[0]) + (node_b[1] - node_a[1])*(x[1] - node_b[1]) + (node_b[2] - node_a[2])*(x[2] - node_b[2]);
 
-        coef = fourpi/(r1r2_sq)*(r0r1/r1 - r0r2/r2);
+        double Kv = 1.0;
+        if(Parameters::use_vortex_core_model){
+            double vm = 2.0;    /* decides vortex core model */
+            /* h = perpendicular dist of x from line joining x1 and x2,
+             * more details: http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html */
+            double h = sqrt(r1r2_sq) / sqrt(pow((node_b[0]-node_a[0]),2) + pow((node_b[1]-node_a[1]),2) + pow((node_b[2]-node_a[2]),2));
+            //rc = sqrt(4*alpha*deltav*visc*t);
+            double rc = 0.1;
+
+            /* Kv : parameter to disingularize biot savart law,
+             * refer to: Estimating the Angle of Attack from Blade Pressure Measurements on the
+             *           NREL Phase VI Rotor Using a Free Wake Vortex Model: Axial Conditions,
+             *           Wind Energ. 2006; 9:549–577 */
+            Kv = (h*h)/ pow((pow(rc,2*vm) + pow(h,2*vm)),1.0/vm);
+        }
+
+        coef = Kv*fourpi/(r1r2_sq)*(r0r1/r1 - r0r2/r2);
 
         edge_velocity[0] = r1r2x*coef;
         edge_velocity[1] = r1r2y*coef;

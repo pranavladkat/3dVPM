@@ -51,10 +51,8 @@ void Solver :: solve(const double dt, int iteration){
     cout << "ITERATION : " << iteration + 1 << endl;
     // compute source strength
     cout << "Computing Source Strengths..." ;
-    if(iteration == 0){
-        source_strength.clear();
-        source_strength.resize(surface->n_panels());
-    }
+    source_strength.clear();
+    source_strength.resize(surface->n_panels());
     for(int p = 0; p < surface->n_panels(); p++){
         source_strength[p] = compute_source_strength(p);
         //cout << std::scientific << source_strength[p] << endl;
@@ -63,16 +61,14 @@ void Solver :: solve(const double dt, int iteration){
 
     // compute source and doublet coefficients and build Influence matrix
     cout << "Computing Influence Coefficient Matrix...";
-    if(iteration == 0){
-        source_influence.clear();
-        source_influence.resize(surface->n_panels(),vector<double>(surface->n_panels()));
-        doublet_influence.clear();
-        doublet_influence.resize(surface->n_panels(),vector<double>(surface->n_panels()));
-    }
+    source_influence.clear();
+    source_influence.resize(surface->n_panels(),vector<double>(surface->n_panels()));
+    doublet_influence.clear();
+    doublet_influence.resize(surface->n_panels(),vector<double>(surface->n_panels()));
     for(int n = 0; n < surface->n_panels(); n++){
         for(int p = 0; p < surface->n_panels(); p++){
 
-            pair<double,double> influence = surface->compute_source_doublet_panel_influence(p,surface->get_collocation_point(n,true));
+            pair<double,double> influence = surface->compute_source_doublet_panel_influence(p,surface->get_collocation_point(n,false));
             if(p == n)
                 influence.second = -0.5;
 
@@ -83,6 +79,38 @@ void Solver :: solve(const double dt, int iteration){
     }
     cout << "Done." << endl;
 
+    // apply Kutta-condition
+    cout << "Applying Kutta-Condition...";
+
+    // compute wake panel range to consider in kutta-condition
+    int wake_panel_start, wake_panel_end;
+    if(Parameters::unsteady_problem){
+        wake_panel_start = wake->n_panels() - surface->n_trailing_edge_panels();
+        wake_panel_end = wake->n_panels();
+    }else{
+        wake_panel_start = 0;
+        wake_panel_end = wake->n_panels();
+    }
+    int TE_panel_counter = 0;
+    for(int wp = wake_panel_start; wp < wake_panel_end; wp++){
+
+        if(TE_panel_counter == surface->n_trailing_edge_panels())
+            TE_panel_counter = 0;
+        int upper_panel = surface->upper_TE_panels[TE_panel_counter];
+        int lower_panel = surface->lower_TE_panels[TE_panel_counter];
+
+        for(int sp = 0; sp < surface->n_panels(); sp++){
+
+            // remember to use negative sign when computing doublet coeff of the wake (as normal is in opposite direction)
+            double influence = - wake->compute_doublet_panel_influence(wp,surface->get_collocation_point(sp,false));
+
+            doublet_influence[sp][upper_panel] += influence;
+            doublet_influence[sp][lower_panel] -= influence;
+            //cout << influence << endl;
+        }
+        TE_panel_counter++;
+    }
+    cout << "Done." << endl;
 
     // compute influence coeficient of the wake doublet
     if(wake_doublet_strength.size() > 0){
@@ -93,35 +121,10 @@ void Solver :: solve(const double dt, int iteration){
         wake_doublet_influence.resize(surface->n_panels(),vector<double>(wake_doublet_strength.size()));
         for(int n = 0; n < surface->n_panels(); n++){
             for(int p = 0; p < (int)wake_doublet_strength.size(); p++)
-                wake_doublet_influence[n][p] = - wake->compute_doublet_panel_influence(p,surface->get_collocation_point(n,true));
+                wake_doublet_influence[n][p] = - wake->compute_doublet_panel_influence(p,surface->get_collocation_point(n,false));
         }
-
         cout << "Done." << endl;
     }
-
-    // apply Kutta-condition
-    cout << "Applying Kutta-Condition...";
-    int TE_panel_counter = 0;
-    for(int wp = 0; wp < wake->n_panels(); wp++){
-
-        if(TE_panel_counter == surface->n_trailing_edge_panels())
-            TE_panel_counter = 0;
-        int upper_panel = surface->upper_TE_panels[TE_panel_counter];
-        int lower_panel = surface->lower_TE_panels[TE_panel_counter];
-
-        for(int sp = 0; sp < surface->n_panels(); sp++){
-
-            // remember to use negative sign when computing doublet coeff of the wake (as normal is in opposite direction)
-            double influence = - wake->compute_doublet_panel_influence(wp,surface->get_collocation_point(sp,true));
-
-            doublet_influence[sp][upper_panel] += influence;
-            doublet_influence[sp][lower_panel] -= influence;
-            //cout << influence << endl;
-        }
-        TE_panel_counter++;
-    }
-    cout << "Done." << endl;
-
 
     // initialize petsc variables
     if(iteration == 0)
@@ -133,36 +136,36 @@ void Solver :: solve(const double dt, int iteration){
     // solve linear system & set unknown doublet strengths
     solve_linear_system();
 
-    // compute surface velocity
-    if(iteration == 0){
-        surface_velocity.clear();
-        surface_velocity.resize(surface->n_panels());
-    }
-    for(int p = 0; p < surface->n_panels(); p++){
-        surface_velocity[p] = compute_surface_velocity(p) ;
-    }
+//    // compute surface velocity
+//    if(iteration == 0){
+//        surface_velocity.clear();
+//        surface_velocity.resize(surface->n_panels());
+//    }
+//    for(int p = 0; p < surface->n_panels(); p++){
+//        surface_velocity[p] = compute_surface_velocity(p) ;
+//    }
 
-    // compute surface potential
-    if(iteration == 0){
-        surface_potential.clear();
-        surface_potential.resize(surface->n_panels());
-    }else
-        surface_potential_old = surface_potential;
-    for(int p = 0; p < surface->n_panels(); p++){
-        surface_potential[p] = compute_surface_potential(p);
-        //cout << surface_potential[p] << endl;
-    }
+//    // compute surface potential
+//    if(iteration == 0){
+//        surface_potential.clear();
+//        surface_potential.resize(surface->n_panels());
+//    }else
+//        surface_potential_old = surface_potential;
+//    for(int p = 0; p < surface->n_panels(); p++){
+//        surface_potential[p] = compute_surface_potential(p);
+//        //cout << surface_potential[p] << endl;
+//    }
 
 
-    // compute coefficient of pressure
-    if(iteration == 0){
-        pressure_coefficient.clear();
-        pressure_coefficient.resize(surface->n_panels());
-    }
-    for(int p = 0; p < surface->n_panels(); p++){
-        pressure_coefficient[p] = compute_pressure_coefficient(p,iteration,dt) ;
-        //cout << pressure_coefficient[p] << endl;
-    }
+//    // compute coefficient of pressure
+//    if(iteration == 0){
+//        pressure_coefficient.clear();
+//        pressure_coefficient.resize(surface->n_panels());
+//    }
+//    for(int p = 0; p < surface->n_panels(); p++){
+//        pressure_coefficient[p] = compute_pressure_coefficient(p,iteration,dt) ;
+//        //cout << pressure_coefficient[p] << endl;
+//    }
 
 
     // compute wake strength, only if problem is unsteady
@@ -180,11 +183,6 @@ void Solver :: solve(const double dt, int iteration){
         }
     }
 
-    //compute body forces
-    body_forces =  compute_body_forces();
-
-    //compute body force coefficients
-    body_force_coefficients = compute_body_force_coefficients();
 
     // write iteration output
     write_output(iteration);
@@ -238,7 +236,6 @@ void Solver :: setup_linear_system(){
     }
     MatAssemblyBegin(doublet_influence_matrix,MAT_FINAL_ASSEMBLY);
     MatAssemblyEnd(doublet_influence_matrix,MAT_FINAL_ASSEMBLY);
-    MatSetOption(doublet_influence_matrix,MAT_NEW_NONZERO_LOCATIONS,PETSC_TRUE);
 
     // setup RHS
     double *_RHS;
@@ -255,8 +252,8 @@ void Solver :: setup_linear_system(){
     if(wake_doublet_strength.size() > 0){
 
         for(int i = 0; i < surface->n_panels(); i++){
-            for(int j = 0; j < wake_doublet_strength.size(); j++)
-                _RHS[i] += wake_doublet_influence[i][j] * wake_doublet_strength[j] ;
+            for(int j = 0; j < (int)wake_doublet_strength.size(); j++)
+                _RHS[i] -= wake_doublet_influence[i][j] * wake_doublet_strength[j] ;
         }
     }
 
@@ -392,8 +389,8 @@ double Solver :: compute_surface_potential(const int& panel) const {
     potential = - doublet_strength[panel];
 
     // add contribution from free stream velocity and body velocity (phi_infinity = U*x+V*y+W*z)
-    vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel,false)) - free_stream_velocity;
-    potential -= local_velocity.dot(surface->get_collocation_point(panel,false));
+    //vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel,false)) - free_stream_velocity;
+    //potential -= local_velocity.dot(surface->get_collocation_point(panel,false));
 
     return potential;
 }
@@ -461,26 +458,26 @@ vector3d Solver :: compute_total_velocity(const vector3d& x) const {
 
 void Solver :: convect_wake(const double& dt){
 
-    assert(Parameters::static_wake == false);
-    assert(wake->n_panels() > 0);
+    if(Parameters::static_wake == false){
+        assert(wake->n_panels() > 0);
 
-    // nodes_to_convect does not include nodes on trailing edge.
-    int nodes_to_convect = wake->n_nodes() - surface->n_trailing_edge_nodes();
-    assert(nodes_to_convect > 0);
+        // nodes_to_convect does not include nodes on trailing edge.
+        int nodes_to_convect = wake->n_nodes() - surface->n_trailing_edge_nodes();
+        assert(nodes_to_convect > 0);
 
-    // compute velocity at the wake nodes which needs to be convected
-    vector<vector3d> wake_velocity(nodes_to_convect);
+        // compute velocity at the wake nodes which needs to be convected
+        vector<vector3d> wake_velocity(nodes_to_convect);
 
-    for(int wn = 0; wn < nodes_to_convect; wn++)
-        wake_velocity[wn] = compute_total_velocity(wake->nodes[wn]);
+        for(int wn = 0; wn < nodes_to_convect; wn++)
+            wake_velocity[wn] = compute_total_velocity(wake->nodes[wn]);
 
-    // move the nodes with wake velocity
-    for(int wn = 0; wn < nodes_to_convect; wn++)
-        wake->nodes[wn] += wake_velocity[wn] * dt ;
+        // move the nodes with wake velocity
+        for(int wn = 0; wn < nodes_to_convect; wn++)
+            wake->nodes[wn] += wake_velocity[wn] * dt ;
 
-    wake->shed_wake(free_stream_velocity,dt);
-
-    log->write_surface_mesh("solver-out-wake",wake);
+        // shed wake (this updates the panel topology as well)
+        wake->shed_wake(free_stream_velocity,dt);
+    }
 
 }
 
@@ -517,9 +514,9 @@ void Solver :: write_output(const int& iteration) const {
     // write data
     cout << "writing output...";
 
-    log->write_surface_data(surface_name,surface,surface_velocity,"V",true);
-    log->write_surface_data(surface_name,surface,pressure_coefficient,"CP",false);
-    log->write_surface_data(surface_name,surface,doublet_strength,"Mu",false);
+    //log->write_surface_data(surface_name,surface,surface_velocity,"V",true);
+    //log->write_surface_data(surface_name,surface,pressure_coefficient,"CP",false);
+    log->write_surface_data(surface_name,surface,doublet_strength,"Mu",true);
     log->write_surface_data(surface_name,surface,source_strength,"Sigma",false);
     log->write_surface_mesh(wake_name,wake);
     if(wake_doublet_strength.size() > 0)
