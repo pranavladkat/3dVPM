@@ -2,11 +2,11 @@
 
 double Parameters :: collocation_point_delta = 1e-12;
 
-double Parameters :: inversion_tolerance = 1e-12;
+double Parameters :: inversion_tolerance = 1e-6;
 
 double Parameters :: farfield_factor = 10.0;
 
-double Parameters :: trailing_edge_wake_shed_factor = 0.2;
+double Parameters :: trailing_edge_wake_shed_factor = 0.25;
 
 bool Parameters :: unsteady_problem = false;
 

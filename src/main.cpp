@@ -12,6 +12,7 @@ int main(int argc, char** args)
 {
 
     Parameters::unsteady_problem = true;
+    Parameters::use_vortex_core_model = false;
 
     // create surface object
     shared_ptr<Surface> surface(new Surface);
@@ -23,15 +24,18 @@ int main(int argc, char** args)
     mesh.read_surface(filename);
 
     // now free stream vel is zero and surface is moving with (-1,0,0)
-    vector3d free_stream_velocity(0,0,0);
-    vector3d surface_velocity(-1,0,0);
-    surface->set_linear_velocity(surface_velocity);
+    vector3d free_stream_velocity(1,0,0);
+    //vector3d surface_linear_velocity(0,0,0);
+    //vector3d surface_angular_velocity(0,0,72);
+    //surface->set_linear_velocity(surface_linear_velocity);
+    //surface->set_angular_velocity(surface_angular_velocity,false);
 
     double time_step = 0.1;
     double fluid_density = 1.225;
 
-    // set blade at 10 degrees AOA
-    surface->rotate_surface(vector3d(0,-10,0),false);
+    // set blade at AOA
+    surface->rotate_surface(vector3d(0,-8,0),false);
+    surface->compute_panel_components();
 
     shared_ptr<Wake> wake(new Wake());
     wake->add_lifting_surface(surface);
@@ -39,7 +43,7 @@ int main(int argc, char** args)
 
 //    shared_ptr<Domain> domain(new Domain());
 //    mesh.set_domain(domain);
-//    mesh.read_domain("NACA0012_1_wakedomain.x");
+//    mesh.read_domain("turbine_1.x");
 
     shared_ptr<vtk_writer> writer(new vtk_writer());
 
@@ -51,10 +55,13 @@ int main(int argc, char** args)
     solver.set_reference_velocity(free_stream_velocity);
     solver.set_fluid_density(fluid_density);
 
-    for(int i = 0; i < 100; i++){
+//    vector3d angular_displacement = surface_angular_velocity * (2 * M_PI / 60.0) * time_step;
+
+    for(int i = 0; i < 40; i++){
         solver.solve(time_step,i);
         solver.convect_wake(time_step);
-        surface->translate_surface(surface_velocity * time_step);
+        //surface->translate_surface(surface_linear_velocity * time_step);
+        //surface->rotate_surface(angular_displacement,true);
         wake->shed_wake(free_stream_velocity,time_step);
         solver.finalize_iteration();
     }

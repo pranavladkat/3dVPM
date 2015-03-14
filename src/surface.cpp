@@ -222,8 +222,17 @@ void Surface :: set_linear_velocity(const vector3d& vel){
     linear_velocity = vel;
 }
 
-void Surface :: set_angular_velocity(const vector3d& vel){
+void Surface :: set_angular_velocity(vector3d vel, bool isRadian_sec){
+
+    // isRadian_sec should be "true" if input is in Rad/sec. Otherwise input should be RPM.
+
+    // if not in Radians per sec
+    if(!isRadian_sec){
+        vel = vel * (2 * M_PI / 60.0);
+    }
+
     angular_velocity = vel;
+
 }
 
 
@@ -268,7 +277,7 @@ vector3d Surface :: get_trailing_edge_bisector(const int TE_node) const {
 
 vector3d Surface :: get_kinematic_velocity(const vector3d& x) const {
 
-    vector3d r = x - surface_origin;
+    vector3d r = surface_origin - x;
     return linear_velocity + angular_velocity.cross(r);
 }
 
@@ -637,12 +646,12 @@ vector3d Surface :: compute_doublet_panel_edge_unit_velocity(const vector3d& nod
 
         double Kv = 1.0;
         if(Parameters::use_vortex_core_model){
-            double vm = 2.0;    /* decides vortex core model */
+            double vm = 1.0;    /* decides vortex core model, vm = 1 == rankine model, vm = 2 == scully vortex model */
             /* h = perpendicular dist of x from line joining x1 and x2,
              * more details: http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html */
             double h = sqrt(r1r2_sq) / sqrt(pow((node_b[0]-node_a[0]),2) + pow((node_b[1]-node_a[1]),2) + pow((node_b[2]-node_a[2]),2));
             //rc = sqrt(4*alpha*deltav*visc*t);
-            double rc = 0.1;
+            double rc = 0.003;
 
             /* Kv : parameter to disingularize biot savart law,
              * refer to: Estimating the Angle of Attack from Blade Pressure Measurements on the

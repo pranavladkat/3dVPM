@@ -92,6 +92,7 @@ void Solver :: solve(const double dt, int iteration){
         wake_panel_end = wake->n_panels();
     }
     int TE_panel_counter = 0;
+
     for(int wp = wake_panel_start; wp < wake_panel_end; wp++){
 
         if(TE_panel_counter == surface->n_trailing_edge_panels())
@@ -137,36 +138,39 @@ void Solver :: solve(const double dt, int iteration){
     // solve linear system & set unknown doublet strengths
     solve_linear_system();
 
-//    // compute surface velocity
-//    if(iteration == 0){
-//        surface_velocity.clear();
-//        surface_velocity.resize(surface->n_panels());
-//    }
-//    for(int p = 0; p < surface->n_panels(); p++){
-//        surface_velocity[p] = compute_surface_velocity(p) ;
-//    }
+    // compute surface velocity
+    cout << "Computing Surface Velocities...";
+    if(iteration == 0){
+        surface_velocity.clear();
+        surface_velocity.resize(surface->n_panels());
+    }
+    for(int p = 0; p < surface->n_panels(); p++){
+        surface_velocity[p] = compute_surface_velocity(p) ;
+    }
+    cout << "Done." << endl;
 
-//    // compute surface potential
-//    if(iteration == 0){
-//        surface_potential.clear();
-//        surface_potential.resize(surface->n_panels());
-//    }else
-//        surface_potential_old = surface_potential;
-//    for(int p = 0; p < surface->n_panels(); p++){
-//        surface_potential[p] = compute_surface_potential(p);
-//        //cout << surface_potential[p] << endl;
-//    }
+    // compute surface potential
+    if(iteration == 0){
+        surface_potential.clear();
+        surface_potential.resize(surface->n_panels());
+    }
+    for(int p = 0; p < surface->n_panels(); p++){
+        surface_potential[p] = compute_surface_potential(p);
+        //cout << surface_potential[p] << endl;
+    }
 
 
-//    // compute coefficient of pressure
-//    if(iteration == 0){
-//        pressure_coefficient.clear();
-//        pressure_coefficient.resize(surface->n_panels());
-//    }
-//    for(int p = 0; p < surface->n_panels(); p++){
-//        pressure_coefficient[p] = compute_pressure_coefficient(p,iteration,dt) ;
-//        //cout << pressure_coefficient[p] << endl;
-//    }
+    // compute coefficient of pressure
+    cout << "Computing Pressure...";
+    if(iteration == 0){
+        pressure_coefficient.clear();
+        pressure_coefficient.resize(surface->n_panels());
+    }
+    for(int p = 0; p < surface->n_panels(); p++){
+        pressure_coefficient[p] = compute_pressure_coefficient(p,iteration,dt) ;
+        //cout << pressure_coefficient[p] << endl;
+    }
+    cout << "Done." << endl;
 
 
     // compute wake strength
@@ -178,6 +182,7 @@ void Solver :: solve(const double dt, int iteration){
         wake_panel_end = wake->n_panels();
     }
     TE_panel_counter = 0;
+
     for(int wp = wake_panel_start; wp < wake_panel_end; wp++){
 
         assert(doublet_strength.size() > 0);
@@ -397,8 +402,8 @@ double Solver :: compute_surface_potential(const int& panel) const {
     potential = - doublet_strength[panel];
 
     // add contribution from free stream velocity and body velocity (phi_infinity = U*x+V*y+W*z)
-    //vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel,false)) - free_stream_velocity;
-    //potential -= local_velocity.dot(surface->get_collocation_point(panel,false));
+    vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel,false)) - free_stream_velocity;
+    potential -= local_velocity.dot(surface->get_collocation_point(panel,false));
 
     return potential;
 }
@@ -452,9 +457,9 @@ vector3d Solver :: compute_total_velocity(const vector3d& x) const {
     }
 
     // compute velocity due to shedded wake panels
-    for(int wp = 0; wp < (int)wake_doublet_strength.size(); wp++)
-        // need to varify the sign
+    for(int wp = 0; wp < (int)wake_doublet_strength.size(); wp++){
         velocity -= wake->compute_doublet_panel_unit_velocity(wp,x) * wake_doublet_strength[wp];
+    }
 
     // add free stream velocity
     velocity += free_stream_velocity;
@@ -465,6 +470,9 @@ vector3d Solver :: compute_total_velocity(const vector3d& x) const {
 
 
 void Solver :: convect_wake(const double& dt){
+
+    // this function only convects nodes which are already present in the wake (except trailing edge nodes)
+    // must call shed_wake() function to add new wake panel row
 
     if(Parameters::static_wake == false){
         assert(wake->n_panels() > 0);
@@ -482,9 +490,6 @@ void Solver :: convect_wake(const double& dt){
         // move the nodes with wake velocity
         for(int wn = 0; wn < nodes_to_convect; wn++)
             wake->nodes[wn] += wake_velocity[wn] * dt ;
-
-        // shed wake (this updates the panel topology as well)
-        //wake->shed_wake(free_stream_velocity,dt);
     }
 
 }
@@ -497,7 +502,8 @@ void Solver :: compute_domain_velocity(const std::shared_ptr<Domain> domain){
     vector<vector3d> domain_velocity(domain->n_nodes());
 
     for(int n = 0; n < domain->n_nodes(); n++)
-        domain_velocity[n] = compute_total_velocity(domain->nodes[n]);
+        //domain_velocity[n] = compute_total_velocity(domain->nodes[n]);
+        domain_velocity[n] = surface->get_kinematic_velocity(domain->nodes[n]);
 
     log->write_domain_data("solver-out-domain",domain,domain_velocity,"V",true);
 }
@@ -522,9 +528,9 @@ void Solver :: write_output(const int& iteration) const {
     // write data
     cout << "writing output...";
 
-    //log->write_surface_data(surface_name,surface,surface_velocity,"V",true);
-    //log->write_surface_data(surface_name,surface,pressure_coefficient,"CP",false);
-    log->write_surface_data(surface_name,surface,doublet_strength,"Mu",true);
+    log->write_surface_data(surface_name,surface,surface_velocity,"V",true);
+    log->write_surface_data(surface_name,surface,pressure_coefficient,"CP",false);
+    log->write_surface_data(surface_name,surface,doublet_strength,"Mu",false);
     log->write_surface_data(surface_name,surface,source_strength,"Sigma",false);
     log->write_surface_mesh(wake_name,wake);
     if(wake_doublet_strength.size() > 0)
@@ -549,7 +555,8 @@ void Solver :: finalize_iteration(){
     // if problem is unsteady
     else if (Parameters::unsteady_problem) {
 
-
+        // save surface potential in previous variable
+        surface_potential_old = surface_potential;
 
     }
 

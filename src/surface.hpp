@@ -50,7 +50,7 @@ public:
 
     void set_linear_velocity(const vector3d&);
 
-    void set_angular_velocity(const vector3d&);
+    void set_angular_velocity(vector3d, bool isRadian_sec);
 
     int n_trailing_edge_nodes() const ;
 
