@@ -19,22 +19,22 @@ int main(int argc, char** args)
 
     // read mesh file
     PLOT3D mesh;
-    string filename = "NACA0012_1.x";
+    string filename = "turbine_1_coarse.x";
     mesh.set_surface(surface);
     mesh.read_surface(filename);
 
     // now free stream vel is zero and surface is moving with (-1,0,0)
-    vector3d free_stream_velocity(1,0,0);
+    vector3d free_stream_velocity(0,0,7);
     //vector3d surface_linear_velocity(0,0,0);
-    //vector3d surface_angular_velocity(0,0,72);
+    vector3d surface_angular_velocity(0,0,72);
     //surface->set_linear_velocity(surface_linear_velocity);
-    //surface->set_angular_velocity(surface_angular_velocity,false);
+    surface->set_angular_velocity(surface_angular_velocity,false);
 
-    double time_step = 0.1;
+    double time_step = 0.01;
     double fluid_density = 1.225;
 
     // set blade at AOA
-    surface->rotate_surface(vector3d(0,-8,0),false);
+    //surface->rotate_surface(vector3d(0,-8,0),false);
     surface->compute_panel_components();
 
     shared_ptr<Wake> wake(new Wake());
@@ -55,13 +55,13 @@ int main(int argc, char** args)
     solver.set_reference_velocity(free_stream_velocity);
     solver.set_fluid_density(fluid_density);
 
-//    vector3d angular_displacement = surface_angular_velocity * (2 * M_PI / 60.0) * time_step;
+    vector3d angular_displacement = surface_angular_velocity * (2 * M_PI / 60.0) * time_step;
 
-    for(int i = 0; i < 40; i++){
+    for(int i = 0; i < 10; i++){
         solver.solve(time_step,i);
         solver.convect_wake(time_step);
         //surface->translate_surface(surface_linear_velocity * time_step);
-        //surface->rotate_surface(angular_displacement,true);
+        surface->rotate_surface(angular_displacement,true);
         wake->shed_wake(free_stream_velocity,time_step);
         solver.finalize_iteration();
     }

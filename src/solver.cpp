@@ -385,10 +385,12 @@ double Solver :: compute_pressure_coefficient(const int& panel, const int& itera
         dphidt = (surface_potential[panel] - surface_potential_old[panel]) / dt ;
     }
 
-    assert(reference_velocity.squared_norm() != 0);
+    vector3d ref_vel = free_stream_velocity + surface->get_kinematic_velocity(surface->get_collocation_point(panel,false));
+
+    assert(ref_vel.squared_norm() != 0);
 
     // compute pressure_coefficient
-    double Cp = 1.0 - (surface_velocity[panel].squared_norm() + 2.0 * dphidt) / reference_velocity.squared_norm();
+    double Cp = 1.0 - (surface_velocity[panel].squared_norm() + 2.0 * dphidt) / ref_vel.squared_norm();
 
     return Cp;
 }
