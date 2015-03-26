@@ -62,10 +62,8 @@ void Surface :: compute_panel_components(){
 
 
     //compute collocation point
-    panel_collocation_points[0].clear();
-    panel_collocation_points[1].clear();
-    panel_collocation_points[0].resize(n_panels());
-    panel_collocation_points[1].resize(n_panels());
+    panel_collocation_points.clear();
+    panel_collocation_points.resize(n_panels());
 
     for(int p = 0; p < n_panels(); p++){
         vector3d new_cp(0,0,0);
@@ -73,11 +71,7 @@ void Surface :: compute_panel_components(){
             new_cp += nodes[panels[p][n]];
 
         new_cp = new_cp / (double)panels[p].size();
-        panel_collocation_points[0][p] = new_cp;
-        //cout << new_cp << endl;
-
-        new_cp -= panel_normals[p] * Parameters::collocation_point_delta;
-        panel_collocation_points[1][p] = new_cp;
+        panel_collocation_points[p] = new_cp;
         //cout << new_cp << endl;
     }
 
@@ -140,14 +134,14 @@ void Surface :: compute_panel_components(){
 
 }
 
-vector3d& Surface :: get_collocation_point(int panel,bool below_surface) {
+vector3d& Surface :: get_collocation_point(int panel) {
     assert(panel < (int)panels.size());
-    return panel_collocation_points[below_surface][panel];
+    return panel_collocation_points[panel];
 }
 
-vector3d Surface :: get_collocation_point(int panel,bool below_surface) const{
+vector3d Surface :: get_collocation_point(int panel) const{
     assert(panel < (int)panels.size());
-    return panel_collocation_points[below_surface][panel];
+    return panel_collocation_points[panel];
 }
 
 
@@ -158,7 +152,7 @@ vector3d Surface :: transform_point_panel(int panel, const vector3d& x) const{
     const vector3d &n = panel_normals[panel];
     const vector3d &t = panel_transverse[panel];
 
-    const vector3d &cp = get_collocation_point(panel,false);
+    const vector3d &cp = get_collocation_point(panel);
 
     diff = x - cp ;
 

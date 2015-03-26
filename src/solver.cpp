@@ -68,7 +68,7 @@ void Solver :: solve(const double dt, int iteration){
     for(int n = 0; n < surface->n_panels(); n++){
         for(int p = 0; p < surface->n_panels(); p++){
 
-            pair<double,double> influence = surface->compute_source_doublet_panel_influence(p,surface->get_collocation_point(n,false));
+            pair<double,double> influence = surface->compute_source_doublet_panel_influence(p,surface->get_collocation_point(n));
             if(p == n)
                 influence.second = -0.5;
 
@@ -103,7 +103,7 @@ void Solver :: solve(const double dt, int iteration){
         for(int sp = 0; sp < surface->n_panels(); sp++){
 
             // remember to use negative sign when computing doublet coeff of the wake (as normal is in opposite direction)
-            double influence = - wake->compute_doublet_panel_influence(wp,surface->get_collocation_point(sp,false));
+            double influence = - wake->compute_doublet_panel_influence(wp,surface->get_collocation_point(sp));
 
             doublet_influence[sp][upper_panel] += influence;
             doublet_influence[sp][lower_panel] -= influence;
@@ -122,7 +122,7 @@ void Solver :: solve(const double dt, int iteration){
         wake_doublet_influence.resize(surface->n_panels(),vector<double>(wake_doublet_strength.size()));
         for(int n = 0; n < surface->n_panels(); n++){
             for(int p = 0; p < (int)wake_doublet_strength.size(); p++)
-                wake_doublet_influence[n][p] = - wake->compute_doublet_panel_influence(p,surface->get_collocation_point(n,false));
+                wake_doublet_influence[n][p] = - wake->compute_doublet_panel_influence(p,surface->get_collocation_point(n));
         }
         cout << "Done." << endl;
     }
@@ -198,6 +198,10 @@ void Solver :: solve(const double dt, int iteration){
         TE_panel_counter++;
     }
 
+    // compute body forces and force coefficients
+    body_forces = compute_body_forces();
+    body_force_coefficients = compute_body_force_coefficients();
+
     // write iteration output
     write_output(iteration);
 
@@ -206,7 +210,7 @@ void Solver :: solve(const double dt, int iteration){
 
 double Solver::compute_source_strength(const int panel) const{
 
-        const vector3d& node = surface->get_collocation_point(panel,false);
+        const vector3d& node = surface->get_collocation_point(panel);
         vector3d vel = surface->get_kinematic_velocity(node) - free_stream_velocity;
         return (vel.dot(surface->get_panel_normal(panel)));
 }
@@ -307,7 +311,7 @@ void Solver :: solve_linear_system(){
 
 vector3d Solver :: compute_surface_velocity(const int panel) const {
 
-    vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel,false)) - free_stream_velocity;
+    vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel)) - free_stream_velocity;
 
     vector3d local_velocity_transformed = surface->transform_vector_panel(panel,local_velocity);
 
@@ -336,7 +340,7 @@ vector3d Solver :: compute_surface_velocity(const int panel) const {
     for(int i = 0; i < neighbour_size; i++){
 
         // transform CP of neighbouring node to panel's coordinates
-        vector3d neighbour_node = surface->transform_point_panel(panel,surface->get_collocation_point(neighbour_panels[i],false));
+        vector3d neighbour_node = surface->transform_point_panel(panel,surface->get_collocation_point(neighbour_panels[i]));
 
         for(int j = 0; j < dim; j++){
             mat[j*neighbour_size+i] = neighbour_node[j];
@@ -385,7 +389,7 @@ double Solver :: compute_pressure_coefficient(const int& panel, const int& itera
         dphidt = (surface_potential[panel] - surface_potential_old[panel]) / dt ;
     }
 
-    vector3d ref_vel = free_stream_velocity + surface->get_kinematic_velocity(surface->get_collocation_point(panel,false));
+    vector3d ref_vel = free_stream_velocity + surface->get_kinematic_velocity(surface->get_collocation_point(panel));
 
     assert(ref_vel.squared_norm() != 0);
 
@@ -404,8 +408,8 @@ double Solver :: compute_surface_potential(const int& panel) const {
     potential = - doublet_strength[panel];
 
     // add contribution from free stream velocity and body velocity (phi_infinity = U*x+V*y+W*z)
-    vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel,false)) - free_stream_velocity;
-    potential -= local_velocity.dot(surface->get_collocation_point(panel,false));
+    vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel)) - free_stream_velocity;
+    potential -= local_velocity.dot(surface->get_collocation_point(panel));
 
     return potential;
 }
@@ -420,9 +424,8 @@ vector3d Solver :: compute_body_forces() const {
     double dynamic_pressure = 0.5 * density * reference_velocity.squared_norm();
 
     // compute force
-    for(int p = 0; p < surface->n_panels(); p++){
-        Force = Force - surface->get_panel_normal(p) * dynamic_pressure * pressure_coefficient[p] * surface->get_panel_area(p);
-    }
+    for(int p = 0; p < surface->n_panels(); p++)
+        Force -= surface->get_panel_normal(p) * dynamic_pressure * pressure_coefficient[p] * surface->get_panel_area(p);
 
     return Force;
 }
@@ -433,15 +436,15 @@ vector3d Solver :: compute_body_force_coefficients() const {
     double dynamic_pressure = 0.5 * density * reference_velocity.squared_norm();
 
     // compute planform-area
-    // S = 0.5 * sum_of ( panel_area * vector_normal_to_free_stream )
-    // need to varify for wind-turbine case
-    double planform_area = 0;
+    vector3d planform_area(0,0,0);
     for(int p = 0; p < surface->n_panels(); p++){
-        planform_area += fabs(surface->get_panel_normal(p)[2] * surface->get_panel_area(p));
+        planform_area[0] += fabs(surface->get_panel_normal(p)[0] * surface->get_panel_area(p));
+        planform_area[1] += fabs(surface->get_panel_normal(p)[1] * surface->get_panel_area(p));
+        planform_area[2] += fabs(surface->get_panel_normal(p)[2] * surface->get_panel_area(p));
     }
     planform_area *= 0.5 ;
 
-    return body_forces / (dynamic_pressure * planform_area);
+    return body_forces / (planform_area * dynamic_pressure);
 }
 
 
@@ -543,7 +546,6 @@ void Solver :: write_output(const int& iteration) const {
 }
 
 
-
 void Solver :: finalize_iteration(){
 
     // if problem is steady
@@ -565,7 +567,14 @@ void Solver :: finalize_iteration(){
 }
 
 
+vector3d Solver:: get_body_forces() const{
+    return body_forces;
+}
 
+
+vector3d Solver :: get_body_force_coefficients() const{
+    return body_force_coefficients;
+}
 
 
 

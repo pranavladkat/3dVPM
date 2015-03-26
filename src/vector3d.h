@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cmath>
 #include <string>
+#include <cmath>
 
 class vector3d{
 private:
@@ -150,6 +151,20 @@ public:
         _data[0] -= vec[0];
         _data[1] -= vec[1];
         _data[2] -= vec[2];
+    }
+
+    void operator *= (const double& x) {
+        _data[0] *= x;
+        _data[1] *= x;
+        _data[2] *= x;
+    }
+
+    vector3d operator / (const vector3d& vec) const{
+        vector3d result;
+        result[0] = _data[0] / vec[0];
+        result[1] = _data[1] / vec[1];
+        result[2] = _data[2] / vec[2];
+        return result;
     }
 
 };

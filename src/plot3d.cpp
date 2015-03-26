@@ -49,6 +49,8 @@ void PLOT3D :: read_surface(std::string name){
     //assert number of nodes in z direction is equal to 1
     assert(KMAX = 1);
 
+    cout << "Mesh has " << (IMAX-1)*(JMAX-1) << " panels." << endl;
+
     surface->nodes.resize(IMAX*JMAX);
 
     //read_coordinates
@@ -103,6 +105,8 @@ void PLOT3D :: read_surface(std::string name){
 
     // build topology
     build_topology();
+
+
 
 }
 

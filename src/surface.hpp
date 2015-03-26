@@ -40,9 +40,9 @@ public:
 
     void compute_panel_components();
 
-    vector3d& get_collocation_point(int panel,bool below_surface);
+    vector3d& get_collocation_point(int panel);
 
-    vector3d get_collocation_point(int panel,bool below_surface) const;
+    vector3d get_collocation_point(int panel) const;
 
     void translate_surface(const vector3d& dX);
 
@@ -85,7 +85,7 @@ private:
     const double fourpi;
 
     /** @brief collocation points of the panels */
-    std::vector<vector3d> panel_collocation_points[2];
+    std::vector<vector3d> panel_collocation_points;
 
     /** @brief panel normal components */
     std::vector<vector3d> panel_normals;

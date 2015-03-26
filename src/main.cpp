@@ -19,7 +19,7 @@ int main(int argc, char** args)
 
     // read mesh file
     PLOT3D mesh;
-    string filename = "turbine_1_coarse.x";
+    string filename = "turbine_1.x";
     mesh.set_surface(surface);
     mesh.read_surface(filename);
 
@@ -57,7 +57,7 @@ int main(int argc, char** args)
 
     vector3d angular_displacement = surface_angular_velocity * (2 * M_PI / 60.0) * time_step;
 
-    for(int i = 0; i < 10; i++){
+    for(int i = 0; i < 45; i++){
         solver.solve(time_step,i);
         solver.convect_wake(time_step);
         //surface->translate_surface(surface_linear_velocity * time_step);

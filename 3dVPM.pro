@@ -22,14 +22,15 @@ QMAKE_CFLAGS_RELEASE -= -O2
 QMAKE_CFLAGS_RELEASE += -O3
 
 SOURCES += \
-    src/main.cpp \
+    #src/main.cpp \
     src/surface.cpp \
     src/plot3d.cpp \
     src/vtk_writer.cpp \
     src/solver.cpp \
     src/wake.cpp \
     src/parameters.cpp \
-    src/domain.cpp
+    src/domain.cpp \
+    examples/naca0012_stationary.cpp
 
 include(deployment.pri)
 qtcAddDeployment()

@@ -67,10 +67,6 @@ private:
 
     vector3d body_forces, body_force_coefficients;
 
-    vector3d compute_body_forces() const ;
-
-    vector3d compute_body_force_coefficients() const ;
-
     vector3d reference_velocity;
 
     double density;
@@ -82,6 +78,10 @@ private:
     std::vector<std::vector<double>> wake_doublet_influence;
 
     void write_output(const int& interation) const ;
+
+    vector3d compute_body_forces() const ;
+
+    vector3d compute_body_force_coefficients() const ;
 
 public:
     Solver(int argC,char** argS);
@@ -106,6 +106,10 @@ public:
     void compute_domain_velocity(const std::shared_ptr<Domain> domain);
 
     void finalize_iteration();
+
+    vector3d get_body_forces() const;
+
+    vector3d get_body_force_coefficients() const;
 
 };
 
