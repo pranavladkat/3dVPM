@@ -389,7 +389,7 @@ double Solver :: compute_pressure_coefficient(const int& panel, const int& itera
         dphidt = (surface_potential[panel] - surface_potential_old[panel]) / dt ;
     }
 
-    vector3d ref_vel = free_stream_velocity + surface->get_kinematic_velocity(surface->get_collocation_point(panel));
+    vector3d ref_vel = free_stream_velocity - surface->get_kinematic_velocity(surface->get_collocation_point(panel));
 
     assert(ref_vel.squared_norm() != 0);
 
@@ -425,7 +425,7 @@ vector3d Solver :: compute_body_forces() const {
 
     // compute force
     for(int p = 0; p < surface->n_panels(); p++)
-        Force -= surface->get_panel_normal(p) * dynamic_pressure * pressure_coefficient[p] * surface->get_panel_area(p);
+        Force -= surface->get_panel_normal(p) * (dynamic_pressure * pressure_coefficient[p] * surface->get_panel_area(p));
 
     return Force;
 }
@@ -436,15 +436,16 @@ vector3d Solver :: compute_body_force_coefficients() const {
     double dynamic_pressure = 0.5 * density * reference_velocity.squared_norm();
 
     // compute planform-area
-    vector3d planform_area(0,0,0);
-    for(int p = 0; p < surface->n_panels(); p++){
-        planform_area[0] += fabs(surface->get_panel_normal(p)[0] * surface->get_panel_area(p));
-        planform_area[1] += fabs(surface->get_panel_normal(p)[1] * surface->get_panel_area(p));
-        planform_area[2] += fabs(surface->get_panel_normal(p)[2] * surface->get_panel_area(p));
-    }
-    planform_area *= 0.5 ;
+    // S = 0.5 * sum_of ( panel_area * vector_normal_to_free_stream )
+    // need to varify for wind-turbine case
 
-    return body_forces / (planform_area * dynamic_pressure);
+    double planform_area = 0;
+    for(int p = 0; p < surface->n_panels(); p++){
+        planform_area += fabs(surface->get_panel_normal(p)[2] * surface->get_panel_area(p));
+    }
+    planform_area /= 2. ;
+
+    return body_forces / (dynamic_pressure * planform_area);
 }
 
 

@@ -30,7 +30,8 @@ SOURCES += \
     src/wake.cpp \
     src/parameters.cpp \
     src/domain.cpp \
-    examples/naca0012_stationary.cpp
+    #examples/naca0012_stationary.cpp
+    examples/wind_turbine.cpp
 
 include(deployment.pri)
 qtcAddDeployment()

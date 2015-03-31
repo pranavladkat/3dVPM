@@ -8,7 +8,8 @@
 
 using namespace std;
 
-int main(int argc, char** args){
+int main(int argc, char** args)
+{
 
     Parameters::unsteady_problem = true;
 
@@ -17,27 +18,27 @@ int main(int argc, char** args){
 
     // read mesh file
     PLOT3D mesh;
-    string filename = "NACA0012_1.x";
+    string filename = "blade_edited.x";
     mesh.set_surface(surface);
     mesh.read_surface(filename);
 
-    //set free stream velocity
-    vector3d free_stream_velocity(1,0,0);
+    // set free stream velocity
+    vector3d free_stream_velocity(0,7,0);
 
-    double time_step = 0.5;
+    //set angular velocity
+    vector3d surface_angular_velocity(0,72,0);
+    surface->set_angular_velocity(surface_angular_velocity,false);
+
+    double time_step = 0.025;
     double fluid_density = 1.225;
 
-    // set blade at AOA
-    surface->rotate_surface(vector3d(0,5.,0),false);
     surface->compute_panel_components();
-
-    // create wake object
     shared_ptr<Wake> wake(new Wake());
     wake->add_lifting_surface(surface);
     wake->initialize(free_stream_velocity,time_step);
 
-    // create writer
     shared_ptr<vtk_writer> writer(new vtk_writer());
+
     Solver solver(argc,args);
     solver.add_surface(surface);
     solver.add_wake(wake);
@@ -46,14 +47,18 @@ int main(int argc, char** args){
     solver.set_reference_velocity(free_stream_velocity);
     solver.set_fluid_density(fluid_density);
 
-    // solve
-    for(int i = 0; i < 80; i++){
+    vector3d angular_displacement = surface_angular_velocity * (2 * M_PI / 60.0) * time_step;
+
+    for(int i = 0; i < 60; i++){
+
         solver.solve(time_step,i);
         solver.convect_wake(time_step);
+        surface->rotate_surface(angular_displacement,true);
         wake->shed_wake(free_stream_velocity,time_step);
         solver.finalize_iteration();
-        cout << "Body Force Coefficients = " << solver.get_body_force_coefficients() << endl;
     }
+
+    cout << "Exiting program." << endl;
 
     return 0;
 }
