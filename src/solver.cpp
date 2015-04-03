@@ -408,8 +408,8 @@ double Solver :: compute_surface_potential(const int& panel) const {
     potential = - doublet_strength[panel];
 
     // add contribution from free stream velocity and body velocity (phi_infinity = U*x+V*y+W*z)
-    vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel)) - free_stream_velocity;
-    potential -= local_velocity.dot(surface->get_collocation_point(panel));
+    //vector3d local_velocity = surface->get_kinematic_velocity(surface->get_collocation_point(panel)) - free_stream_velocity;
+    //potential += local_velocity.dot(surface->get_collocation_point(panel));
 
     return potential;
 }
@@ -421,11 +421,12 @@ vector3d Solver :: compute_body_forces() const {
 
     vector3d Force(0,0,0);
 
-    double dynamic_pressure = 0.5 * density * reference_velocity.squared_norm();
-
     // compute force
-    for(int p = 0; p < surface->n_panels(); p++)
+    for(int p = 0; p < surface->n_panels(); p++){
+        vector3d ref_vel = free_stream_velocity - surface->get_kinematic_velocity(surface->get_collocation_point(p));
+        double dynamic_pressure = 0.5 * density * ref_vel.squared_norm();
         Force -= surface->get_panel_normal(p) * (dynamic_pressure * pressure_coefficient[p] * surface->get_panel_area(p));
+    }
 
     return Force;
 }

@@ -11,24 +11,24 @@ using namespace std;
 int main(int argc, char** args){
 
     Parameters::unsteady_problem = true;
+    Parameters::trailing_edge_wake_shed_factor = 1.0;
 
     // create surface object
     shared_ptr<Surface> surface(new Surface);
 
     // read mesh file
     PLOT3D mesh;
-    string filename = "NACA0012_1.x";
+    string filename = "cylinder.x";
     mesh.set_surface(surface);
     mesh.read_surface(filename);
 
-    //set free stream velocity
-    vector3d free_stream_velocity(1,0,0);
-
-    double time_step = 1.5;
+    double time_step = 0.1;
     double fluid_density = 1.225;
 
-    // set blade at AOA
-    surface->rotate_surface(vector3d(0,-10.,0),false);
+    //set free stream velocity
+    vector3d free_stream_velocity(0,0,0);
+    vector3d surface_velocity(-1,0,0);
+    surface->set_linear_velocity(surface_velocity);
 
     // create wake object
     shared_ptr<Wake> wake(new Wake());
@@ -41,18 +41,31 @@ int main(int argc, char** args){
     solver.add_surface(surface);
     solver.add_wake(wake);
     solver.add_logger(writer);
-    solver.set_free_stream_velocity(free_stream_velocity);
-    solver.set_reference_velocity(free_stream_velocity);
     solver.set_fluid_density(fluid_density);
 
-    // solve
-    for(int i = 0; i < 10; i++){
+
+    vector3d acceleration(1.5,0,0);
+
+    for(int i = 0; i < 20; i++){
+
+        cout << "Instataneous Surface Velocity = " << surface_velocity << endl;
+
+        solver.set_reference_velocity(surface_velocity);
+
         solver.solve(time_step,i);
+        surface->translate_surface(surface_velocity*time_step);
         solver.convect_wake(time_step);
         wake->shed_wake(free_stream_velocity,time_step);
         solver.finalize_iteration();
-        cout << "Body Force Coefficients = " << solver.get_body_force_coefficients() << endl;
+
+        surface_velocity -= acceleration * time_step;
+        surface->set_linear_velocity(surface_velocity);
+
+        cout << "Added mass coefficient = " << solver.get_body_forces()[0]/acceleration[0] << endl;
+
     }
+
+    cout << "Exiting program." << endl;
 
     return 0;
 }
