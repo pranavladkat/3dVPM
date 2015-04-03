@@ -24,6 +24,9 @@ int main(int argc, char** args){
     mesh.set_surface(surface);
     mesh.read_surface(filename);
 
+    // set blade at AOA
+    surface->rotate_surface(vector3d(0,-5.,0),false);
+
     //set free stream velocity
     vector3d free_stream_velocity(1,0,0);
 
@@ -49,8 +52,6 @@ int main(int argc, char** args){
     solver.solve(time_step);
     solver.finalize_iteration();
     cout << "Body Force Coefficients = " << solver.get_body_force_coefficients() << endl;
-
-
 
     return 0;
 }
