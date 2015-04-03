@@ -21,6 +21,9 @@ void Wake :: initialize(const vector3d& free_stream_velocity, const double &dt){
     assert(lifting_surface != NULL);
     assert(lifting_surface->n_trailing_edge_nodes() > 0);
 
+    // compute lifting surface panel components
+    lifting_surface->compute_panel_components();
+
     // allocate memory for nodes
     nodes.resize(2*lifting_surface->n_trailing_edge_nodes());
 

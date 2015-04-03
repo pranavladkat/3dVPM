@@ -49,7 +49,7 @@ int main(int argc, char** args)
 
     vector3d angular_displacement = surface_angular_velocity * (2 * M_PI / 60.0) * time_step;
 
-    for(int i = 0; i < 60; i++){
+    for(int i = 0; i < 30; i++){
 
         solver.solve(time_step,i);
         solver.convect_wake(time_step);
