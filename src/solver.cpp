@@ -579,7 +579,9 @@ vector3d Solver :: get_body_force_coefficients() const{
 }
 
 
-
+double Solver :: get_pressure_coefficient(const int panel) const{
+    return pressure_coefficient[panel];
+}
 
 
 

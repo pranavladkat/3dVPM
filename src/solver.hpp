@@ -111,6 +111,8 @@ public:
 
     vector3d get_body_force_coefficients() const;
 
+    double get_pressure_coefficient(const int panel) const;
+
 };
 
 

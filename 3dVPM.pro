@@ -32,8 +32,8 @@ SOURCES += \
     src/domain.cpp \
     #examples/naca0012_stationary.cpp \
     #examples/steady_apame.cpp
-    #examples/wind_turbine.cpp
-    examples/accelerating_cylinder.cpp
+    examples/wind_turbine.cpp
+    #examples/accelerating_cylinder.cpp
 
 include(deployment.pri)
 qtcAddDeployment()

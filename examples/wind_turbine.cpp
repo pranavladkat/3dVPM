@@ -18,7 +18,7 @@ int main(int argc, char** args)
 
     // read mesh file
     PLOT3D mesh;
-    string filename = "blade_edited.x";
+    string filename = "blade_4.775_modified.x";
     mesh.set_surface(surface);
     mesh.read_surface(filename);
 
@@ -26,7 +26,7 @@ int main(int argc, char** args)
     vector3d free_stream_velocity(0,7,0);
 
     //set angular velocity
-    vector3d surface_angular_velocity(0,72,0);
+    vector3d surface_angular_velocity(0,71.63,0);
     surface->set_angular_velocity(surface_angular_velocity,false);
 
     double time_step = 0.025;
@@ -49,6 +49,15 @@ int main(int argc, char** args)
 
     vector3d angular_displacement = surface_angular_velocity * (2 * M_PI / 60.0) * time_step;
 
+    //write coordinates of the collocation points to data variable
+    vector<vector<double>> data (4,vector<double>(surface->n_panels()));
+    for(int p = 0; p < surface->n_panels(); p++){
+        const vector3d& point = surface->get_collocation_point(p);
+        data[0][p] = point[0];
+        data[1][p] = point[1];
+        data[2][p] = point[2];
+    }
+
     for(int i = 0; i < 30; i++){
 
         solver.solve(time_step,i);
@@ -57,6 +66,20 @@ int main(int argc, char** args)
         wake->shed_wake(free_stream_velocity,time_step);
         solver.finalize_iteration();
     }
+
+    //write Cp values to data
+    for(int p = 0; p < surface->n_panels(); p++){
+        data[3][p] = solver.get_pressure_coefficient(p);
+    }
+
+    // write to file
+    ofstream file("Output/pressure_data.csv");
+    file << "x,y,z,cp" << endl;
+    for(int p = 0; p < surface->n_panels(); p++){
+        file << scientific << data[0][p] << "," << data[1][p]
+             << "," << data[2][p] << "," << data[3][p] << endl;
+    }
+    file.close();
 
     cout << "Exiting program." << endl;
 
