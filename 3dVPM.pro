@@ -32,7 +32,8 @@ SOURCES += \
     src/domain.cpp \
     #examples/naca0012_stationary.cpp \
     #examples/steady_apame.cpp
-    examples/wind_turbine.cpp
+    #examples/wind_turbine.cpp \
+    examples/heaving_airfoil.cpp
     #examples/accelerating_cylinder.cpp
 
 include(deployment.pri)
