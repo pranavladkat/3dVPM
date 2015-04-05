@@ -53,7 +53,11 @@ void Solver :: solve(const double dt, int iteration){
     cout << "Computing Source Strengths..." ;
     source_strength.clear();
     source_strength.resize(surface->n_panels());
-    for(int p = 0; p < surface->n_panels(); p++){
+
+    const int n_panels = surface->n_panels();
+
+#pragma omp parallel for
+    for(int p = 0; p < n_panels; p++){
         source_strength[p] = compute_source_strength(p);
         //cout << std::scientific << source_strength[p] << endl;
     }
@@ -65,8 +69,10 @@ void Solver :: solve(const double dt, int iteration){
     source_influence.resize(surface->n_panels(),vector<double>(surface->n_panels()));
     doublet_influence.clear();
     doublet_influence.resize(surface->n_panels(),vector<double>(surface->n_panels()));
-    for(int n = 0; n < surface->n_panels(); n++){
-        for(int p = 0; p < surface->n_panels(); p++){
+
+#pragma omp parallel for schedule(dynamic,1)
+    for(int n = 0; n < n_panels; n++){
+        for(int p = 0; p < n_panels; p++){
 
             pair<double,double> influence = surface->compute_source_doublet_panel_influence(p,surface->get_collocation_point(n));
             if(p == n)

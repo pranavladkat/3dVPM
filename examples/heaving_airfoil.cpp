@@ -10,6 +10,10 @@ using namespace std;
 
 int main(int argc, char** args){
 
+#ifdef _OPENMP
+    omp_set_num_threads(3);
+#endif
+
     Parameters::unsteady_problem = true;
 
     // create surface object
@@ -57,7 +61,7 @@ int main(int argc, char** args){
     double time = 0;
 
     // solve
-    for(int i = 0; i < 300; i++){
+    for(int i = 0; i < 60; i++){
 
         solver.solve(time_step,i);
         solver.convect_wake(time_step);
