@@ -59,14 +59,11 @@ int main(int argc, char** args){
     vector3d surface_velocity(0,0,0);
 
     double time = 0;
-    double clock = 0;
 
     // solve
     for(int i = 0; i < 60; i++){
 
-        double t_start = omp_get_wtime();
         solver.solve(time_step,i);
-        clock += omp_get_wtime() - t_start;
         solver.convect_wake(time_step);
 
         surface_velocity = vector3d(0,0,max_amplitude*cos(omega*time));
@@ -79,8 +76,6 @@ int main(int argc, char** args){
         time += time_step;
 
     }
-
-    cout << "clock = " << clock << endl;
 
     cout << "Exiting program." << endl;
 
