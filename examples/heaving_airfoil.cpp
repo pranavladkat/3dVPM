@@ -62,7 +62,7 @@ int main(int argc, char** args){
     double clock = 0;
 
     // solve
-    for(int i = 0; i < 20; i++){
+    for(int i = 0; i < 60; i++){
 
         double t_start = omp_get_wtime();
         solver.solve(time_step,i);

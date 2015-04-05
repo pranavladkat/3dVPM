@@ -97,13 +97,10 @@ void Solver :: solve(const double dt, int iteration){
         wake_panel_start = 0;
         wake_panel_end = wake->n_panels();
     }
-    int TE_panel_counter = 0;
 
-//    double t_start = omp_get_wtime();
     for(int wp = wake_panel_start; wp < wake_panel_end; wp++){
 
-        if(TE_panel_counter == surface->n_trailing_edge_panels())
-            TE_panel_counter = 0;
+        int TE_panel_counter = wp % surface->n_trailing_edge_panels();
         int upper_panel = surface->upper_TE_panels[TE_panel_counter];
         int lower_panel = surface->lower_TE_panels[TE_panel_counter];
 
@@ -117,10 +114,8 @@ void Solver :: solve(const double dt, int iteration){
             doublet_influence[sp][lower_panel] -= influence;
             //cout << influence << endl;
         }
-        TE_panel_counter++;
+
     }
-//    cout << "time = " << omp_get_wtime() - t_start << endl;
-//    exit(1);
     cout << "Done." << endl;
 
     // compute influence coeficient of the wake doublet
@@ -130,7 +125,8 @@ void Solver :: solve(const double dt, int iteration){
 
         wake_doublet_influence.clear();
         wake_doublet_influence.resize(surface->n_panels(),vector<double>(wake_doublet_strength.size()));
-        for(int n = 0; n < surface->n_panels(); n++){
+#pragma omp parallel for schedule(dynamic,1)
+        for(int n = 0; n < n_panels; n++){
             for(int p = 0; p < (int)wake_doublet_strength.size(); p++)
                 wake_doublet_influence[n][p] = - wake->compute_doublet_panel_influence(p,surface->get_collocation_point(n));
         }
@@ -154,7 +150,9 @@ void Solver :: solve(const double dt, int iteration){
         surface_velocity.clear();
         surface_velocity.resize(surface->n_panels());
     }
-    for(int p = 0; p < surface->n_panels(); p++){
+
+#pragma omp parallel for
+    for(int p = 0; p < n_panels; p++){
         surface_velocity[p] = compute_surface_velocity(p) ;
     }
     cout << "Done." << endl;
@@ -191,21 +189,17 @@ void Solver :: solve(const double dt, int iteration){
         wake_panel_start = 0;
         wake_panel_end = wake->n_panels();
     }
-    TE_panel_counter = 0;
 
     for(int wp = wake_panel_start; wp < wake_panel_end; wp++){
 
         assert(doublet_strength.size() > 0);
 
-        if(TE_panel_counter == surface->n_trailing_edge_panels())
-            TE_panel_counter = 0;
+        int TE_panel_counter = wp % surface->n_trailing_edge_panels();
         int upper_panel = surface->upper_TE_panels[TE_panel_counter];
         int lower_panel = surface->lower_TE_panels[TE_panel_counter];
 
         double wake_strenth = doublet_strength[upper_panel] - doublet_strength[lower_panel];
         wake_doublet_strength.push_back(wake_strenth);
-
-        TE_panel_counter++;
     }
 
     // compute body forces and force coefficients
@@ -256,12 +250,14 @@ void Solver :: setup_linear_system(){
         col[i] = i;
 
     /* copy doublet_influence to doublet_influence_matrix */
+//#pragma omp parallel for
     for(int i = 0;i < surface->n_panels(); i++){
         for(int j = 0; j < surface->n_panels(); j++){
             val[j] = doublet_influence[i][j];
         }
         MatSetValues(doublet_influence_matrix,1,&i,surface->n_panels(),col,val,INSERT_VALUES);
     }
+
     MatAssemblyBegin(doublet_influence_matrix,MAT_FINAL_ASSEMBLY);
     MatAssemblyEnd(doublet_influence_matrix,MAT_FINAL_ASSEMBLY);
 
@@ -270,6 +266,7 @@ void Solver :: setup_linear_system(){
     VecGetArray(RHS,&_RHS);
 
     // RHS = source_coefficient * source_strength
+#pragma omp parallel for
     for(int i = 0; i < surface->n_panels(); i++){
         for(int j = 0; j < surface->n_panels(); j++)
             _RHS[i] += source_influence[i][j] * source_strength[j];
@@ -278,6 +275,7 @@ void Solver :: setup_linear_system(){
 
     // RHS -= wake_doublet_coefficient * wake_doublet_strength
     if(wake_doublet_strength.size() > 0){
+#pragma omp parallel for
         for(int i = 0; i < surface->n_panels(); i++){
             for(int j = 0; j < (int)wake_doublet_strength.size(); j++)
                 _RHS[i] -= wake_doublet_influence[i][j] * wake_doublet_strength[j] ;
