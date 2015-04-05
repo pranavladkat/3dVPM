@@ -8,6 +8,10 @@
 #include <cassert>
 #include <iomanip>
 
+#ifdef _OPENMP
+    #include <omp.h>
+#endif
+
 #include "surface.hpp"
 #include "wake.hpp"
 #include "vtk_writer.hpp"
