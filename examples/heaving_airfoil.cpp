@@ -21,7 +21,7 @@ int main(int argc, char** args){
     mesh.set_surface(surface);
     mesh.read_surface(filename);
 
-    double time_step = 0.05;
+    double time_step = 0.025;
     double fluid_density = 1.225;
 
     /* Refer Low Speed Aerodynamics - J. Katz, A. Plotkin
@@ -57,7 +57,7 @@ int main(int argc, char** args){
     double time = 0;
 
     // solve
-    for(int i = 0; i < 30; i++){
+    for(int i = 0; i < 300; i++){
 
         solver.solve(time_step,i);
         solver.convect_wake(time_step);
