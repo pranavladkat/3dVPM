@@ -99,6 +99,7 @@ void Solver :: solve(const double dt, int iteration){
     }
     int TE_panel_counter = 0;
 
+//    double t_start = omp_get_wtime();
     for(int wp = wake_panel_start; wp < wake_panel_end; wp++){
 
         if(TE_panel_counter == surface->n_trailing_edge_panels())
@@ -106,7 +107,8 @@ void Solver :: solve(const double dt, int iteration){
         int upper_panel = surface->upper_TE_panels[TE_panel_counter];
         int lower_panel = surface->lower_TE_panels[TE_panel_counter];
 
-        for(int sp = 0; sp < surface->n_panels(); sp++){
+#pragma omp parallel for schedule(dynamic,1)
+        for(int sp = 0; sp < n_panels; sp++){
 
             // remember to use negative sign when computing doublet coeff of the wake (as normal is in opposite direction)
             double influence = - wake->compute_doublet_panel_influence(wp,surface->get_collocation_point(sp));
@@ -117,6 +119,8 @@ void Solver :: solve(const double dt, int iteration){
         }
         TE_panel_counter++;
     }
+//    cout << "time = " << omp_get_wtime() - t_start << endl;
+//    exit(1);
     cout << "Done." << endl;
 
     // compute influence coeficient of the wake doublet
