@@ -162,7 +162,8 @@ void Solver :: solve(const double dt, int iteration){
         surface_potential.clear();
         surface_potential.resize(surface->n_panels());
     }
-    for(int p = 0; p < surface->n_panels(); p++){
+#pragma omp parallel for
+    for(int p = 0; p < n_panels; p++){
         surface_potential[p] = compute_surface_potential(p);
         //cout << surface_potential[p] << endl;
     }
@@ -174,6 +175,7 @@ void Solver :: solve(const double dt, int iteration){
         pressure_coefficient.clear();
         pressure_coefficient.resize(surface->n_panels());
     }
+#pragma omp parallel for
     for(int p = 0; p < surface->n_panels(); p++){
         pressure_coefficient[p] = compute_pressure_coefficient(p,iteration,dt) ;
         //cout << pressure_coefficient[p] << endl;
@@ -498,13 +500,17 @@ void Solver :: convect_wake(const double& dt){
 
         // compute velocity at the wake nodes which needs to be convected
         vector<vector3d> wake_velocity(nodes_to_convect);
-
+#pragma omp parallel
+{
+#pragma omp for
         for(int wn = 0; wn < nodes_to_convect; wn++)
             wake_velocity[wn] = compute_total_velocity(wake->nodes[wn]);
-
+#pragma omp barrier
         // move the nodes with wake velocity
+#pragma omp for
         for(int wn = 0; wn < nodes_to_convect; wn++)
             wake->nodes[wn] += wake_velocity[wn] * dt ;
+}
     }
 
 }

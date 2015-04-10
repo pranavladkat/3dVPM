@@ -8,6 +8,9 @@
 
 using namespace std;
 
+// turn off assertions
+#define NDEBUG
+
 int main(int argc, char** args)
 {
 
@@ -18,7 +21,7 @@ int main(int argc, char** args)
 
     // read mesh file
     PLOT3D mesh;
-    string filename = "blade_4.775_modified.x";
+    string filename = "blade_5.5_modified.x";
     mesh.set_surface(surface);
     mesh.read_surface(filename);
 
@@ -29,7 +32,7 @@ int main(int argc, char** args)
     vector3d surface_angular_velocity(0,71.63,0);
     surface->set_angular_velocity(surface_angular_velocity,false);
 
-    double time_step = 0.025;
+    double time_step = 0.015;
     double fluid_density = 1.225;
 
     surface->compute_panel_components();
