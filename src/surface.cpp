@@ -508,8 +508,8 @@ vector3d Surface :: compute_source_panel_unit_velocity(const int& panel, const v
     vector3d transformed_node = transform_point_panel(panel,node);
 
     // if z -> +-0 then velocity = (0,0,0) if x lies outside of panel
-    if(fabs(transformed_node[2]) < Parameters::inversion_tolerance)
-        return panel_velocity;
+    //if(fabs(transformed_node[2]) < Parameters::inversion_tolerance)
+    //    return panel_velocity;
 
     double distance = transformed_node.norm();
 

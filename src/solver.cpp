@@ -522,11 +522,12 @@ void Solver :: compute_domain_velocity(const std::shared_ptr<Domain> domain){
     assert(domain->n_nodes() > 0);
     vector<vector3d> domain_velocity(domain->n_nodes());
 
-    for(int n = 0; n < domain->n_nodes(); n++)
-        //domain_velocity[n] = compute_total_velocity(domain->nodes[n]);
-        domain_velocity[n] = surface->get_kinematic_velocity(domain->nodes[n]);
 
-    log->write_domain_data("solver-out-domain",domain,domain_velocity,"V",true);
+    for(int n = 0; n < domain->n_nodes(); n++){
+        domain_velocity[n] = surface->compute_source_panel_unit_velocity(0,domain->nodes[n]);
+    }
+
+    log->write_domain_data("Output/solver-out-domain",domain,domain_velocity,"V",true);
 }
 
 

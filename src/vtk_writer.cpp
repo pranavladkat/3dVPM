@@ -77,7 +77,7 @@ void vtk_writer :: write_surface_mesh(string filename,std::shared_ptr<Surface> s
 
 void vtk_writer :: write_domain_mesh(std::string filename,std::shared_ptr<Domain> domain){
 
-    string name = filename + ".vtk";
+    string name = filename + file_extension;
 
     ofstream ofile(name);
 

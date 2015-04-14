@@ -24,7 +24,7 @@ public:
     ~vtk_writer();
 
     template <class T>
-    void write_surface_data(std::string filename, std::shared_ptr<Surface> surface, std::vector<T> data,std::string name, bool writemesh){
+    void write_surface_data(std::string filename, const std::shared_ptr<Surface> surface, const std::vector<T>& data,std::string name, bool writemesh){
 
         if(writemesh){
             write_surface_mesh(filename,surface);

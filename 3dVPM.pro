@@ -29,7 +29,9 @@ SOURCES += \
     #examples/naca0012_stationary.cpp \
     #examples/steady_apame.cpp
     #examples/wind_turbine.cpp \
-    examples/heaving_airfoil.cpp
+    #examples/heaving_airfoil.cpp \
+    examples/plot_demo.cpp \
+    src/matlab_writer.cpp
     #examples/accelerating_cylinder.cpp
 
 include(deployment.pri)
@@ -41,6 +43,7 @@ HEADERS += \
     src/vector3d.h \
     src/vtk_writer.hpp \
     src/solver.hpp \
-    src/wake.hpp \
     src/parameters.hpp \
-    src/domain.hpp
+    src/domain.hpp \
+    src/matlab_writer.hpp \
+
