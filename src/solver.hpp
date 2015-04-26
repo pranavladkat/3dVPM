@@ -15,6 +15,7 @@
 #include "surface.hpp"
 #include "wake.hpp"
 #include "vtk_writer.hpp"
+#include "matlab_writer.hpp"
 
 #include "petscksp.h"
 
@@ -28,6 +29,8 @@ private:
     std::shared_ptr<Wake> wake;
 
     std::shared_ptr<vtk_writer> log;
+
+    std::shared_ptr<matlab_writer> mlog;
 
     vector3d free_stream_velocity;
 
@@ -81,8 +84,6 @@ private:
 
     std::vector<std::vector<double>> wake_doublet_influence;
 
-    void write_output(const int& interation) const ;
-
     vector3d compute_body_forces() const ;
 
     vector3d compute_body_force_coefficients() const ;
@@ -96,6 +97,8 @@ public:
     void add_wake(const std::shared_ptr<Wake>);
 
     void add_logger(const std::shared_ptr<vtk_writer>);
+
+    void add_logger(const std::shared_ptr<matlab_writer>);
 
     void set_free_stream_velocity(const vector3d&);
 
@@ -116,6 +119,10 @@ public:
     vector3d get_body_force_coefficients() const;
 
     double get_pressure_coefficient(const int panel) const;
+
+    void write_output(const int& interation) const ;
+
+    void write_matlab_output() const;
 
 };
 

@@ -26,12 +26,12 @@ SOURCES += \
     src/wake.cpp \
     src/parameters.cpp \
     src/domain.cpp \
+    src/matlab_writer.cpp \
     #examples/naca0012_stationary.cpp \
     #examples/steady_apame.cpp
     #examples/wind_turbine.cpp \
     #examples/heaving_airfoil.cpp \
     examples/plot_demo.cpp \
-    src/matlab_writer.cpp
     #examples/accelerating_cylinder.cpp
 
 include(deployment.pri)
@@ -46,4 +46,4 @@ HEADERS += \
     src/parameters.hpp \
     src/domain.hpp \
     src/matlab_writer.hpp \
-
+    src/wake.hpp

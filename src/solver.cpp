@@ -33,6 +33,10 @@ void Solver :: add_logger(const std::shared_ptr<vtk_writer> writer){
     log = writer;
 }
 
+void Solver :: add_logger(const std::shared_ptr<matlab_writer> writer){
+    mlog = writer;
+}
+
 
 void Solver :: set_free_stream_velocity(const vector3d& vel){
     free_stream_velocity = vel;
@@ -209,7 +213,7 @@ void Solver :: solve(const double dt, int iteration){
     body_force_coefficients = compute_body_force_coefficients();
 
     // write iteration output
-    write_output(iteration);
+    //write_output(iteration);
 
 }
 
@@ -524,10 +528,13 @@ void Solver :: compute_domain_velocity(const std::shared_ptr<Domain> domain){
 
 
     for(int n = 0; n < domain->n_nodes(); n++){
-        domain_velocity[n] = surface->compute_source_panel_unit_velocity(0,domain->nodes[n]);
+        //vector3d vel = surface->compute_source_panel_unit_velocity(0,domain->nodes[n]);
+        vector3d vel = surface->compute_doublet_panel_unit_velocity(0,domain->nodes[n]);
+        vel.normalize();
+        domain_velocity[n] = vel;
     }
 
-    log->write_domain_data("Output/solver-out-domain",domain,domain_velocity,"V",true);
+    mlog->write_domain_data("Output/solver_out_domain",domain,domain_velocity,"V",true);
 }
 
 
@@ -599,7 +606,13 @@ double Solver :: get_pressure_coefficient(const int panel) const{
 }
 
 
+void Solver :: write_matlab_output() const {
 
+    mlog->write_surface_data("Output/surface_mesh",surface,pressure_coefficient,"CP",true);
+    mlog->write_surface_data("Output/wake_mesh",wake,wake_doublet_strength,"mu",true);
+
+    //writer->write_surface_mesh("Output/wake_mesh",wake);
+}
 
 
 

@@ -61,7 +61,7 @@ int main(int argc, char** args)
         data[2][p] = point[2];
     }
 
-    for(int i = 0; i < 30; i++){
+    for(int i = 0; i < 90; i++){
 
         solver.solve(time_step,i);
         solver.convect_wake(time_step);

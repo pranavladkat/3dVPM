@@ -44,7 +44,7 @@ int main(int argc, char** args){
     solver.set_fluid_density(fluid_density);
 
 
-    vector3d acceleration(1.5,0,0);
+    vector3d acceleration(1.2,0,0);
 
     for(int i = 0; i < 10; i++){
 
