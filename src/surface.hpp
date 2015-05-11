@@ -13,7 +13,7 @@
 /**
    Class for containing geometry entities and functions to perform operations on them
 
-   @brief Represents geometry - takes input from mesh objects.
+   @brief Surface class to represent geometry and perform various operations on it
 */
 
 class Surface
