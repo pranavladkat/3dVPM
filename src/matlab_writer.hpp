@@ -14,6 +14,8 @@
 
 using namespace std;
 
+/** @brief writes output in matlab format. DO NOT USE - NOT a standard format  */
+
 class matlab_writer
 {
 private:

@@ -6,6 +6,12 @@
 #include <string>
 #include <cmath>
 
+/** @brief vector3d class to represent an array of size 3
+ *
+ * useful in representing 3d point coordinates, vectors, forces, etc.
+ * Also performs some basic operations, helps in reducing equations sizes
+ */
+
 class vector3d{
 private:
     double _data[3];

@@ -10,6 +10,8 @@
 
 #include "vector3d.h"
 
+/** @brief Domain class to compute velocity off-surface  */
+
 class Domain
 {
 private:
