@@ -11,14 +11,21 @@
 #include "surface.hpp"
 #include "domain.hpp"
 
+/**
+   @brief PLOT3D class to read plot3D mesh file and manipulates surface object
+*/
+
 class PLOT3D
 {
 private:
 
+    // filename to read
     std::string surface_filename, domain_filename;
 
+    /** @brief stores the pointer to a surface object */
     std::shared_ptr<Surface> surface;
 
+    /** @brief stores the pointer to a domain object */
     std::shared_ptr<Domain> domain;
 
     /** @brief each block represents a separate Surface */
@@ -38,19 +45,25 @@ public:
     PLOT3D();
     ~PLOT3D();
 
+    /** @brief set file name to read */
     void set_surface_filename(std::string);
 
+    /** @brief connect to surface object  */
     void set_surface(std::shared_ptr<Surface>);
 
     /** @brief Flips the normals of the surface */
     void flip_normals(bool);
 
+    /** @brief read the plot3d mesh file */
     void read_surface(std::string name);
 
+    /** @brief buid topology from mesh file */
     void build_topology();
 
+    /** @brief connect to domain object */
     void set_domain(std::shared_ptr<Domain>);
 
+    /** @brief read mesh file for the domain */
     void read_domain(std::string name);
 
 

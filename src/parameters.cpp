@@ -1,7 +1,5 @@
 #include "parameters.hpp"
 
-double Parameters :: collocation_point_delta = 1e-12;
-
 double Parameters :: inversion_tolerance = 1e-12;
 
 double Parameters :: farfield_factor = 10.0;
